@@ -1,0 +1,135 @@
+/**
+ * SmartOPD – Design Tokens & System Variables
+ * File: css/variables.css
+ * 
+ * Provides centralized tokens for colors, typography, spacing,
+ * elevation shadows, border radii, and animation timings.
+ */
+
+:root {
+  /* ==========================================================================
+     Brand & Neutral Colors (Exact User-Specified Palette)
+     ========================================================================== */
+  --primary-teal: #0F766E;        /* Primary action & brand teal */
+  --primary-teal-hover: #115E59;  /* Darker teal for button hover */
+  --primary-teal-light: #CCFBF1;  /* Soft teal tint for backgrounds */
+  --primary-teal-subtle: #F0FDFA; /* Ultra light teal for cards */
+
+  --navy-dark: #0B2545;           /* Deep navy for sidebar & header brand */
+  --navy-darker: #06182E;         /* Darkest navy for borders / footer */
+  --navy-surface: #13335C;        /* Navy container / active nav item */
+
+  --sky-accent: #38BDF8;          /* Bright sky accent for focus & highlights */
+  --sky-accent-hover: #0EA5E9;    /* Darker sky hover */
+  --sky-subtle: #E0F2FE;          /* Soft sky tint */
+
+  --bg-page: #F4F8FA;             /* App canvas background */
+  --bg-card: #FFFFFF;             /* Pure white card surface */
+  --bg-input: #FFFFFF;            /* Form field background */
+
+  --text-main: #1E293B;           /* Primary slate text (high contrast) */
+  --text-muted: #64748B;          /* Muted slate text for labels & hints */
+  --text-light: #94A3B8;          /* Lighter text for placeholders/footers */
+  --text-inverse: #FFFFFF;        /* White text for dark surfaces */
+
+  --border-light: #E2E8F0;        /* Card & divider subtle border */
+  --border-medium: #CBD5E1;       /* Form control border */
+  --border-focus: #0F766E;        /* Active input border */
+
+  /* ==========================================================================
+     Clinical Severity Colors (Triage Level 1 – 5)
+     ========================================================================== */
+  /* Level 5: Emergency (Immediate resuscitation / critical) */
+  --sev-5-emergency: #DC2626;
+  --sev-5-bg: #FEF2F2;
+  --sev-5-border: #FECACA;
+
+  /* Level 4: High (Urgent attention within 15 mins) */
+  --sev-4-high: #EA580C;
+  --sev-4-bg: #FFF7ED;
+  --sev-4-border: #FFEDD5;
+
+  /* Level 3: Medium (Semi-urgent evaluation) */
+  --sev-3-medium: #F59E0B;
+  --sev-3-bg: #FFFBEB;
+  --sev-3-border: #FEF3C7;
+
+  /* Level 1 & 2: Low (Routine OPD consultation) */
+  --sev-low: #16A34A;
+  --sev-low-bg: #F0FDF4;
+  --sev-low-border: #DCFCE7;
+
+  /* ==========================================================================
+     Explainability & Fairness Tokens
+     ========================================================================== */
+  --fairness-violet: #7C3AED;     /* Fairness-boost badge violet */
+  --fairness-bg: #F5F3FF;         /* Soft violet surface */
+  --fairness-border: #DDD6FE;     /* Subtle violet border */
+
+  /* ==========================================================================
+     OPD Queue Status Colors
+     ========================================================================== */
+  --status-scheduled: #2563EB;    /* Pre-booked appointment */
+  --status-scheduled-bg: #EFF6FF;
+  --status-walkin: #6366F1;       /* Walk-in patient token */
+  --status-walkin-bg: #EEF2FF;
+  --status-waiting: #D97706;      /* In lobby waiting */
+  --status-waiting-bg: #FFFBEB;
+  --status-consulting: #0D9488;   /* In doctor room right now */
+  --status-consulting-bg: #F0FDFA;
+  --status-completed: #059669;    /* Visit completed */
+  --status-completed-bg: #ECFDF5;
+
+  /* ==========================================================================
+     Typography (Inter from Google Fonts)
+     ========================================================================== */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ==========================================================================
+     Spacing System (8px Grid Alignment)
+     ========================================================================== */
+  --space-0: 0px;
+  --space-1: 4px;   /* 0.5x */
+  --space-2: 8px;   /* 1x base */
+  --space-3: 12px;  /* 1.5x */
+  --space-4: 16px;  /* 2x */
+  --space-5: 20px;  /* 2.5x */
+  --space-6: 24px;  /* 3x */
+  --space-8: 32px;  /* 4x */
+  --space-10: 40px; /* 5x */
+  --space-12: 48px; /* 6x */
+  --space-16: 64px; /* 8x */
+
+  /* ==========================================================================
+     Border Radii (12px rounded cards standard)
+     ========================================================================== */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;  /* Required: 12px rounded cards */
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* ==========================================================================
+     Elevation & Shadows (Soft modern healthcare shadows)
+     ========================================================================== */
+  --shadow-xs: 0 1px 2px 0 rgba(11, 37, 69, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(11, 37, 69, 0.08), 0 1px 2px -1px rgba(11, 37, 69, 0.08);
+  --shadow-md: 0 4px 6px -1px rgba(11, 37, 69, 0.08), 0 2px 4px -2px rgba(11, 37, 69, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(11, 37, 69, 0.08), 0 4px 6px -4px rgba(11, 37, 69, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(11, 37, 69, 0.1), 0 8px 10px -6px rgba(11, 37, 69, 0.06);
+  --shadow-teal: 0 4px 14px 0 rgba(15, 118, 110, 0.25);
+  --shadow-card-hover: 0 12px 24px -4px rgba(11, 37, 69, 0.12), 0 4px 8px -2px rgba(11, 37, 69, 0.06);
+
+  /* ==========================================================================
+     Transitions & Motion
+     ========================================================================== */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout dimensions */
+  --sidebar-width: 260px;
+  --topbar-height: 68px;
+}

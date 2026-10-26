@@ -1,0 +1,33 @@
+# Java build target & archives
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+logs/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# SQLite persistence database & journals
+data/
+backend/data/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Dependencies & OS metadata
+node_modules/
+.DS_Store
+Thumbs.db

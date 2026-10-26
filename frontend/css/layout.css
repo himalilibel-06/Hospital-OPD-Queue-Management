@@ -1,0 +1,615 @@
+/**
+ * SmartOPD – App Shell Layout (Sidebar + Topbar)
+ * File: css/layout.css
+ * 
+ * Reusable layout system featuring:
+ * - Dark Navy (#0B2545) responsive sidebar with navigation and logout
+ * - Clean white top bar with live clock, user profile chip, and mobile menu toggle
+ * - Responsive off-canvas navigation for mobile and tablet screens (< 992px)
+ * 
+ * ============================================================================
+ * REUSABLE HTML SNIPPET TO COPY INTO EVERY PAGE:
+ * ============================================================================
+ * 
+ * <div class="app-shell">
+ *   <!-- Mobile Backdrop Overlay -->
+ *   <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+ * 
+ *   <!-- Sidebar -->
+ *   <aside class="app-sidebar" id="app-sidebar">
+ *     <div class="sidebar-header">
+ *       <a href="index.html" class="sidebar-brand">
+ *         <div class="brand-logo-icon">
+ *           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+ *             <path d="M12 6v12M6 12h12"/>
+ *             <path d="M22 12A10 10 0 1 1 12 2a10 10 0 0 1 10 10z"/>
+ *           </svg>
+ *         </div>
+ *         <div class="brand-text-group">
+ *           <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+ *           <span class="brand-subtext">Explainable Triage</span>
+ *         </div>
+ *       </a>
+ *     </div>
+ * 
+ *     <nav class="sidebar-nav">
+ *       <div class="nav-section-title">MAIN MENU</div>
+ *       <ul class="nav-list" id="sidebar-nav-links">
+ *         <!-- Navigation links inserted here or role-tailored -->
+ *       </ul>
+ *     </nav>
+ * 
+ *     <div class="sidebar-footer">
+ *       <button class="sidebar-logout-btn" id="logout-btn">
+ *         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+ *           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+ *           <polyline points="16 17 21 12 16 7"></polyline>
+ *           <line x1="21" y1="12" x2="9" y2="12"></line>
+ *         </svg>
+ *         <span>Sign Out</span>
+ *       </button>
+ *     </div>
+ *   </aside>
+ * 
+ *   <!-- Main Content Area -->
+ *   <div class="app-main">
+ *     <!-- Top Bar -->
+ *     <header class="app-topbar">
+ *       <div class="topbar-left">
+ *         <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation Menu">
+ *           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+ *             <line x1="3" y1="12" x2="21" y2="12"></line>
+ *             <line x1="3" y1="6" x2="21" y2="6"></line>
+ *             <line x1="3" y1="18" x2="21" y2="18"></line>
+ *           </svg>
+ *         </button>
+ *         <div class="topbar-heading">
+ *           <h1 class="page-title" id="page-title">Dashboard</h1>
+ *           <span class="page-subtitle" id="page-subtitle">Hospital Queue Management System</span>
+ *         </div>
+ *       </div>
+ * 
+ *       <div class="topbar-right">
+ *         <div class="live-clock-card" title="Current Hospital Time">
+ *           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+ *             <circle cx="12" cy="12" r="10"></circle>
+ *             <polyline points="12 6 12 12 16 14"></polyline>
+ *           </svg>
+ *           <span id="live-clock">--:--:--</span>
+ *         </div>
+ * 
+ *         <div class="user-profile-chip" id="user-chip">
+ *           <div class="user-avatar" id="user-avatar">FD</div>
+ *           <div class="user-info">
+ *             <span class="user-name" id="user-name">Front Desk Officer</span>
+ *             <span class="user-role-badge" id="user-role-badge">Front Desk</span>
+ *           </div>
+ *         </div>
+ *       </div>
+ *     </header>
+ * 
+ *     <!-- Page Content Body -->
+ *     <main class="app-content">
+ *       <!-- Insert view content here -->
+ *     </main>
+ *   </div>
+ * </div>
+ * ============================================================================
+ */
+
+/* ==========================================================================
+   App Shell Grid Layout
+   ========================================================================== */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   Sidebar (Dark Navy #0B2545)
+   ========================================================================== */
+.app-sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--navy-dark);
+  color: var(--text-inverse);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 50;
+  transition: transform var(--transition-normal);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-header {
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  color: #FFFFFF;
+}
+
+.sidebar-brand:hover {
+  text-decoration: none;
+}
+
+.brand-logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary-teal), var(--sky-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.4);
+  flex-shrink: 0;
+}
+
+.brand-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  line-height: 1.1;
+}
+
+.brand-name .text-teal-accent {
+  color: var(--sky-accent);
+}
+
+.brand-subtext {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  flex: 1;
+  padding: var(--space-5) var(--space-3);
+  overflow-y: auto;
+}
+
+.nav-section-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item {
+  width: 100%;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.6875rem var(--space-3);
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.nav-link svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+}
+
+.nav-link:hover svg {
+  opacity: 1;
+}
+
+/* Active Navigation State */
+.nav-link.active {
+  color: #FFFFFF;
+  background: linear-gradient(90deg, rgba(15, 118, 110, 0.35) 0%, rgba(15, 118, 110, 0.15) 100%);
+  font-weight: 600;
+  border-left: 3px solid var(--sky-accent);
+}
+
+.nav-link.disabled-nav {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.nav-link.active svg {
+  color: var(--sky-accent);
+  opacity: 1;
+}
+
+.nav-link .nav-counter {
+  margin-left: auto;
+  font-size: 0.75rem;
+  padding: 2px 7px;
+  background-color: var(--primary-teal);
+  color: #FFFFFF;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+}
+
+/* Sidebar Footer & Logout */
+.sidebar-footer {
+  padding: var(--space-4) var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(6, 24, 46, 0.5);
+}
+
+.sidebar-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.625rem var(--space-3);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-logout-btn:hover {
+  background-color: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.5);
+  color: #FCA5A5;
+}
+
+/* ==========================================================================
+   App Main Area & Topbar
+   ========================================================================== */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Prevents flex children from overflowing */
+  min-height: 100vh;
+}
+
+/* Topbar */
+.app-topbar {
+  height: var(--topbar-height);
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  box-shadow: var(--shadow-xs);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.menu-toggle-btn {
+  display: none; /* Visible on mobile */
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+  padding: 6px;
+  color: var(--navy-dark);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast);
+}
+
+.menu-toggle-btn:hover {
+  background-color: var(--bg-page);
+}
+
+.topbar-heading {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--navy-dark);
+  margin-bottom: 0;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Live Clock Display */
+.live-clock-card {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.4rem 0.75rem;
+  background-color: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--navy-dark);
+}
+
+.live-clock-card svg {
+  color: var(--primary-teal);
+}
+
+/* User Profile Chip */
+.user-profile-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 4px 10px 4px 4px;
+  background-color: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.user-profile-chip:hover,
+.user-profile-chip.active {
+  background-color: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.user-chip-chevron {
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+  margin-left: 2px;
+}
+
+.user-profile-chip.active .user-chip-chevron {
+  transform: rotate(180deg);
+}
+
+/* User Profile Chip Dropdown Menu */
+.user-chip-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 10px);
+  box-shadow: 0 10px 25px -5px rgba(11, 37, 69, 0.12), 0 8px 10px -6px rgba(11, 37, 69, 0.08);
+  min-width: 200px;
+  z-index: 1050;
+  display: none;
+  flex-direction: column;
+  padding: 6px;
+  animation: modalSlideUp 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.user-chip-dropdown.show {
+  display: flex;
+}
+
+.user-chip-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--navy-dark);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.user-chip-dropdown-item:hover {
+  background-color: var(--bg-page);
+  color: var(--navy-dark);
+}
+
+.user-chip-dropdown-item.text-danger:hover {
+  background-color: #FEF2F2;
+  color: var(--sev-5-emergency, #DC2626);
+}
+
+.user-chip-dropdown-divider {
+  height: 1px;
+  background-color: var(--border-light);
+  margin: 4px 0;
+}
+
+/* Password Toggle Icon Button */
+.password-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field-wrapper input {
+  padding-right: 40px !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color var(--transition-fast);
+}
+
+.password-toggle-btn:hover {
+  color: var(--navy-dark);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background-color: var(--navy-dark);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--primary-teal);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--navy-dark);
+}
+
+.user-role-badge {
+  font-size: 0.6875rem;
+  color: var(--primary-teal);
+  font-weight: 600;
+}
+
+/* Main Content Body */
+.app-content {
+  flex: 1;
+  padding: var(--space-6);
+  max-width: 1600px;
+  width: 100%;
+}
+
+/* Backdrop for Mobile Navigation */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(11, 37, 69, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 45;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 991px) {
+  .menu-toggle-btn {
+    display: inline-flex;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop.active {
+    display: block;
+    opacity: 1;
+  }
+
+  .app-topbar {
+    padding: 0 var(--space-4);
+  }
+
+  .app-content {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 640px) {
+  .page-subtitle {
+    display: none;
+  }
+
+  .live-clock-card {
+    display: none; /* Hide clock on very narrow mobile screens */
+  }
+
+  .user-info {
+    display: none; /* Compact avatar only */
+  }
+
+  .user-profile-chip {
+    padding: 2px;
+  }
+}

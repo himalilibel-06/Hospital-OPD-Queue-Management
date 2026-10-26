@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPD Queue Simulation & Policy Analytics – SmartOPD</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <style>
+    /* Analytics & Simulation Layout */
+    .sim-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: var(--space-6);
+      align-items: start;
+    }
+
+    /* Simulation Control Form Card */
+    .sim-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .sim-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sim-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      margin: 0;
+    }
+
+    .sim-form-group {
+      margin-bottom: var(--space-4);
+    }
+    .sim-form-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--navy-dark);
+      margin-bottom: 4px;
+    }
+    .sim-form-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    /* Policy Comparison Cards & Table */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+    .policy-col-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-xs);
+      position: relative;
+    }
+    .policy-col-card.smartopd {
+      border: 2px solid var(--primary-teal);
+      background: #FAFDFA;
+    }
+    .policy-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: var(--radius-xs);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    /* Comparison Metrics Table */
+    .metrics-table-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      margin-bottom: var(--space-6);
+      overflow: hidden;
+      box-shadow: var(--shadow-xs);
+    }
+    .metrics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .metrics-table th {
+      background: #F8FAFC;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--navy-dark);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .metrics-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-main);
+    }
+    .metrics-table tr:last-child td {
+      border-bottom: none;
+    }
+    .best-metric {
+      background-color: rgba(16, 185, 129, 0.12);
+      font-weight: 700;
+      color: #047857;
+      border-radius: 4px;
+      padding: 2px 6px;
+      display: inline-block;
+    }
+
+    /* Key Insights Panel */
+    .insights-card {
+      background: #F0FDFA;
+      border-radius: var(--radius-md);
+      border: 1px solid #99F6E4;
+      padding: var(--space-5);
+      margin-bottom: var(--space-6);
+    }
+    .insights-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0F766E;
+      margin-bottom: 12px;
+    }
+    .insight-list {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--navy-dark);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    .insight-list li {
+      margin-bottom: 6px;
+    }
+    .insight-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Charts Layout */
+    .sim-charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+    .chart-box {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-xs);
+    }
+
+    /* Export & Actions bar */
+    .sim-top-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-5);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+      }
+      .app-sidebar,
+      .app-topbar,
+      .sim-layout > div:first-child,
+      .sim-top-toolbar,
+      .sidebar-backdrop {
+        display: none !important;
+      }
+      .app-shell {
+        display: block !important;
+      }
+      .app-main {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .app-content {
+        padding: 0 !important;
+      }
+      .sim-layout {
+        display: block !important;
+      }
+      .comparison-grid,
+      .sim-charts-grid {
+        grid-template-columns: 1fr 1fr !important;
+        page-break-inside: avoid;
+      }
+      .metrics-table-card,
+      .insights-card,
+      .chart-box {
+        box-shadow: none !important;
+        border: 1px solid #CCC !important;
+        page-break-inside: avoid;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .sim-layout { grid-template-columns: 1fr; }
+      .sim-charts-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Mobile Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Sidebar (Dark Navy #0B2545) -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="reception-dashboard.html" class="sidebar-brand">
+          <div class="brand-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+            <span class="brand-subtext">Front Desk</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">FRONT DESK</div>
+        <ul class="nav-list" id="sidebar-nav-links">
+          <!-- Populated by app.js -->
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-logout-btn" id="logout-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <!-- Top Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="topbar-heading">
+            <h1 class="page-title">OPD Queue Simulation Engine</h1>
+            <span class="page-subtitle">Discrete-event simulator comparing FCFS, Strict Priority & SmartOPD policies</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="live-clock-card" title="Current Hospital Time">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="live-clock">--:--:--</span>
+          </div>
+
+          <div class="user-profile-chip" id="user-chip">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="app-content">
+
+        <!-- Top Action Toolbar -->
+        <div class="sim-top-toolbar">
+          <div>
+            <span class="text-sm text-muted">Test queue behavior under simulated emergency loads & evaluate policy outcomes.</span>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary btn-sm" onclick="exportResultsCSV()" id="btn-export-csv">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download CSV</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="window.print()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
+              <span>Print Report</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="sim-layout">
+          <!-- Left Column: Simulation Config Form -->
+          <div>
+            <div class="sim-card">
+              <div class="sim-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20v-6M6 20V10M18 20V4"></path>
+                  </svg>
+                  <h3 class="sim-title">Simulation Parameters</h3>
+                </div>
+                <div id="sim-offered-load-container" style="display: flex; align-items: center; gap: 6px;">
+                  <span id="sim-offered-load-text" style="font-size: 0.8125rem; font-weight: 700; color: var(--navy-dark);">Offered load: <span id="val-offered-load" class="text-teal">90 percent</span></span>
+                </div>
+              </div>
+
+              <!-- Overloaded Warning Badge (above 100% load) -->
+              <div id="sim-overloaded-badge" style="display: none; background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; padding: 7px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; margin-bottom: var(--space-4); align-items: center; gap: 6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Overloaded: queues cannot clear, results exaggerate delays</span>
+              </div>
+
+              <!-- Preset Dropdown -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-preset">Operational Preset</label>
+                </div>
+                <select id="sim-preset" class="form-control" onchange="applyPreset(this.value)">
+                  <option value="custom">Custom Configuration</option>
+                  <!-- Populated dynamically from GET /api/simulation/presets -->
+                </select>
+              </div>
+
+              <!-- Number of Patients -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-patients">Total Patients</label>
+                  <span id="val-patients" class="text-teal font-semibold">150</span>
+                </div>
+                <input type="range" class="setting-range w-full" id="sim-patients" min="50" max="500" step="10" value="150" oninput="document.getElementById('val-patients').textContent = this.value; markCustom();">
+              </div>
+
+              <!-- Number of Doctors -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-doctors">Active Doctors</label>
+                  <span id="val-doctors" class="text-teal font-semibold">4</span>
+                </div>
+                <input type="range" class="setting-range w-full" id="sim-doctors" min="1" max="6" step="1" value="4" oninput="document.getElementById('val-doctors').textContent = this.value; markCustom();">
+              </div>
+
+              <!-- Average Consult Duration -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-consult">Avg Consult Duration</label>
+                  <span id="val-consult" class="text-teal font-semibold">12 min</span>
+                </div>
+                <input type="range" class="setting-range w-full" id="sim-consult" min="5" max="30" step="1" value="12" oninput="document.getElementById('val-consult').textContent = `${this.value} min`; markCustom();">
+              </div>
+
+              <!-- Emergency Percentage -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-emerg">Emergency Ratio</label>
+                  <span id="val-emerg" class="font-semibold" style="color: var(--sev-5-emergency);">10%</span>
+                </div>
+                <input type="range" class="setting-range w-full" id="sim-emerg" min="0" max="30" step="1" value="10" oninput="document.getElementById('val-emerg').textContent = `${this.value}%`; markCustom();">
+              </div>
+
+              <!-- Scheduled Percentage -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-scheduled">Scheduled Ratio</label>
+                  <span id="val-scheduled" class="text-teal font-semibold">50%</span>
+                </div>
+                <input type="range" class="setting-range w-full" id="sim-scheduled" min="10" max="80" step="5" value="50" oninput="document.getElementById('val-scheduled').textContent = `${this.value}%`; markCustom();">
+              </div>
+
+              <!-- Arrival Spread -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-spread">Arrival Window</label>
+                  <span id="val-spread" class="text-teal font-semibold">300 min (5h)</span>
+                </div>
+                <input type="range" class="setting-range w-full" id="sim-spread" min="60" max="480" step="30" value="300" oninput="document.getElementById('val-spread').textContent = `${this.value} min (${(this.value/60).toFixed(1)}h)`; markCustom();">
+              </div>
+
+              <!-- Random Seed -->
+              <div class="sim-form-group">
+                <div class="sim-form-label">
+                  <label for="sim-seed">PRNG Seed (Deterministic)</label>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <input type="number" id="sim-seed" class="form-control" value="202" style="font-weight: 700;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="randomiseSeed()" title="Generate Random Seed">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <polyline points="1 20 1 14 7 14"></polyline>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                  </button>
+                </div>
+                <span class="text-xs text-muted">Fixed seed ensures repeatable benchmark comparisons.</span>
+              </div>
+
+              <!-- Action Button -->
+              <div style="margin-top: var(--space-5);">
+                <button type="button" class="btn btn-primary w-full" id="btn-run-sim" onclick="triggerSimulation()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span>Run Discrete Simulation</span>
+                </button>
+              </div>
+
+              <!-- Speed & Engine note -->
+              <div style="margin-top: 12px; text-align: center;" class="text-xs text-muted">
+                Engine: Discrete-Event (Seeded Mulberry32 PRNG)
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Results & Comparisons -->
+          <div>
+            <!-- Key Insights Card -->
+            <div class="insights-card" id="insights-panel">
+              <div class="insights-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Automated Simulation Insights</span>
+              </div>
+              <ul class="insight-list" id="insights-list">
+                <li>Running discrete simulation...</li>
+              </ul>
+            </div>
+
+            <!-- Policy Comparison Table -->
+            <div class="metrics-table-card">
+              <div class="card-header" style="background: #FFFFFF;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--navy-dark); margin: 0;">Policy Performance Benchmark</h3>
+                <span class="text-xs text-muted">Same patient list evaluated across 3 queue disciplines</span>
+              </div>
+              <div class="table-container" style="border: none; border-radius: 0;">
+                <table class="metrics-table">
+                  <thead>
+                    <tr>
+                      <th>Queue Metric</th>
+                      <th style="width: 25%;">FCFS (Baseline)</th>
+                      <th style="width: 25%;">Strict Priority</th>
+                      <th style="width: 25%; color: var(--primary-teal);">SmartOPD (Fairness)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="metrics-table-body">
+                    <!-- Populated dynamically with best values highlighted -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="sim-charts-grid">
+              <!-- Chart 1: Grouped Bar - Who waits? -->
+              <div class="chart-box">
+                <div class="chart-card-header">
+                  <div>
+                    <h4 class="chart-card-title">Who waits?</h4>
+                    <span class="text-xs text-muted">Average wait by category (Emergency, Scheduled, Walk-in)</span>
+                  </div>
+                </div>
+                <div id="chart-cat-waits" style="min-height: 260px;"></div>
+              </div>
+
+              <!-- Chart 2: Starvation Counts Bar -->
+              <div class="chart-box">
+                <div class="chart-card-header">
+                  <div>
+                    <h4 class="chart-card-title">Starvation Count (>2x Threshold)</h4>
+                    <span class="text-xs text-muted">Patients experiencing severe delay</span>
+                  </div>
+                </div>
+                <div id="chart-starvation" style="min-height: 260px;"></div>
+              </div>
+            </div>
+
+            <!-- Chart 3: Wait Time vs Arrival Order Line Chart -->
+            <div class="chart-box" style="margin-bottom: var(--space-6);">
+              <div class="chart-card-header">
+                <div>
+                  <h4 class="chart-card-title">Wait Progression Across Arrival Order</h4>
+                  <span class="text-xs text-muted">SmartOPD individual patient wait time trend</span>
+                </div>
+              </div>
+              <div id="chart-wait-progression" style="min-height: 220px;"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Today's Live OPD Operational Data Section (GET /api/analytics telemetry) -->
+        <section class="today-live-section" style="margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--border-light);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--navy-dark); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+                <span>Today's Live OPD Operational Data</span>
+              </h2>
+              <span class="text-xs text-muted">Real-time telemetry and clinical queue metrics from active hospital departments</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="renderTodayLiveData()" title="Refresh live telemetry">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              <span>Refresh Live Data</span>
+            </button>
+          </div>
+
+          <!-- KPI Cards Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+            <div class="stat-card" style="padding: 16px;">
+              <div class="stat-icon-box stat-icon-patients">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              </div>
+              <div class="stat-card-details">
+                <span class="stat-number" id="live-total-patients">0</span>
+                <span class="stat-label">Total Patients</span>
+              </div>
+            </div>
+
+            <div class="stat-card" style="padding: 16px;">
+              <div class="stat-icon-box" style="background: rgba(124, 58, 237, 0.12); color: var(--fairness-violet);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+              </div>
+              <div class="stat-card-details">
+                <span class="stat-number" id="live-fairness-boosts">0</span>
+                <span class="stat-label">Fairness Boosts</span>
+              </div>
+            </div>
+
+            <div class="stat-card" style="padding: 16px;">
+              <div class="stat-icon-box stat-icon-emergency">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              </div>
+              <div class="stat-card-details">
+                <span class="stat-number" id="live-emerg-overrides">0</span>
+                <span class="stat-label">Emergency Overrides</span>
+              </div>
+            </div>
+
+            <div class="stat-card" style="padding: 16px;">
+              <div class="stat-icon-box" style="background: rgba(239, 68, 68, 0.12); color: #DC2626;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              </div>
+              <div class="stat-card-details">
+                <span class="stat-number" id="live-noshow-count">0</span>
+                <span class="stat-label">No-Shows</span>
+              </div>
+            </div>
+
+            <div class="stat-card" style="padding: 16px;">
+              <div class="stat-icon-box stat-icon-waittime">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div class="stat-card-details">
+                <span class="stat-number" id="live-longest-wait">0m</span>
+                <span class="stat-label">Longest Wait</span>
+              </div>
+            </div>
+
+            <div class="stat-card" style="padding: 16px;">
+              <div class="stat-icon-box" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <div class="stat-card-details">
+                <span class="stat-number" id="live-doc-util">0%</span>
+                <span class="stat-label">Doctor Utilisation</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Patients per Hour & Category Split -->
+          <div class="sim-charts-grid">
+            <div class="chart-box">
+              <div class="chart-card-header">
+                <div>
+                  <h4 class="chart-card-title">Patients Registered per Hour</h4>
+                  <span class="text-xs text-muted">Arrival pace distribution across hospital working hours</span>
+                </div>
+              </div>
+              <div id="live-chart-hourly" style="min-height: 220px;"></div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-card-header">
+                <div>
+                  <h4 class="chart-card-title">Patient Intake by Category</h4>
+                  <span class="text-xs text-muted">Emergency vs Scheduled appointments vs Walk-in visits</span>
+                </div>
+              </div>
+              <div id="live-chart-categories" style="min-height: 220px;"></div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Average Wait per Doctor & Severity Distribution -->
+          <div class="sim-charts-grid">
+            <div class="chart-box">
+              <div class="chart-card-header">
+                <div>
+                  <h4 class="chart-card-title">Average Wait per Doctor</h4>
+                  <span class="text-xs text-muted">Mean lobby wait time across duty physicians</span>
+                </div>
+              </div>
+              <div id="live-chart-doc-waits" style="min-height: 220px;"></div>
+            </div>
+
+            <div class="chart-box">
+              <div class="chart-card-header">
+                <div>
+                  <h4 class="chart-card-title">Clinical Severity Triage Distribution</h4>
+                  <span class="text-xs text-muted">Level 1 (Non-urgent) through Level 5 (Resuscitation)</span>
+                </div>
+              </div>
+              <div id="live-chart-severity" style="min-height: 220px;"></div>
+            </div>
+          </div>
+
+          <!-- Doctor Utilisation Roster Table -->
+          <div class="metrics-table-card" style="margin-bottom: var(--space-6);">
+            <div class="card-header" style="background: #FFFFFF;">
+              <h3 style="font-size: 1rem; font-weight: 700; color: var(--navy-dark); margin: 0;">Physician Utilisation & Room Load</h3>
+              <span class="text-xs text-muted">Duty status, completed consultations, and active queue pressure</span>
+            </div>
+            <div class="table-container" style="border: none; border-radius: 0;">
+              <table class="metrics-table">
+                <thead>
+                  <tr>
+                    <th>Doctor Name</th>
+                    <th>Department & Room</th>
+                    <th>Status</th>
+                    <th>Completed</th>
+                    <th>Waiting</th>
+                    <th style="width: 25%;">Utilisation Rate</th>
+                  </tr>
+                </thead>
+                <tbody id="live-doc-util-tbody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Shared App & API Scripts & Charts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // 1. Role Guard & App Shell Layout
+    SmartOPD.requireAuth(['Receptionist']);
+    SmartOPD.initLayout('analytics');
+
+    let currentSimResults = null;
+
+    // Simulation presets catalog populated dynamically from GET /api/simulation/presets
+    let SIM_PRESETS = {};
+
+    async function loadPresetsFromApi() {
+      try {
+        const raw = await SmartOPDApi.get('/api/simulation/presets');
+        const adapted = SmartOPDAdapters.adaptSimulationPresets(raw);
+        const selectEl = document.getElementById('sim-preset');
+        if (selectEl && Array.isArray(adapted) && adapted.length > 0) {
+          selectEl.innerHTML = '<option value="custom">Custom Configuration</option>';
+          adapted.forEach(p => {
+            if (p.id) {
+              SIM_PRESETS[p.id] = p;
+              const opt = document.createElement('option');
+              opt.value = p.id;
+              opt.textContent = `${p.name} (${p.numPatients} patients, ${p.numDoctors} docs, ~${p.offeredLoadPercent || ''}% load)`;
+              selectEl.appendChild(opt);
+            }
+          });
+          const defaultKey = SIM_PRESETS['busy-day'] ? 'busy-day' : adapted[0].id;
+          selectEl.value = defaultKey;
+          applyPreset(defaultKey);
+        }
+      } catch (e) {
+        console.warn('Could not load simulation presets from server:', e);
+      }
+    }
+
+    // Presets handler
+    function applyPreset(key) {
+      if (key === 'custom') return;
+      const preset = SIM_PRESETS[key];
+      if (!preset) return;
+
+      document.getElementById('sim-patients').value = preset.numPatients;
+      document.getElementById('val-patients').textContent = preset.numPatients;
+
+      document.getElementById('sim-doctors').value = preset.numDoctors;
+      document.getElementById('val-doctors').textContent = preset.numDoctors;
+
+      document.getElementById('sim-consult').value = preset.avgConsultMinutes;
+      document.getElementById('val-consult').textContent = `${preset.avgConsultMinutes} min`;
+
+      document.getElementById('sim-emerg').value = preset.emergencyPercent;
+      document.getElementById('val-emerg').textContent = `${preset.emergencyPercent}%`;
+
+      document.getElementById('sim-scheduled').value = preset.scheduledPercent;
+      document.getElementById('val-scheduled').textContent = `${preset.scheduledPercent}%`;
+
+      document.getElementById('sim-spread').value = preset.arrivalSpreadMinutes;
+      document.getElementById('val-spread').textContent = `${preset.arrivalSpreadMinutes} min (${(preset.arrivalSpreadMinutes/60).toFixed(1)}h)`;
+
+      document.getElementById('sim-seed').value = preset.randomSeed;
+
+      updateOfferedLoadDisplay(preset.offeredLoadPercent || calculateCurrentOfferedLoad());
+      triggerSimulation();
+    }
+
+    function calculateCurrentOfferedLoad() {
+      const numPatients = parseInt(document.getElementById('sim-patients').value, 10) || 108;
+      const numDoctors = parseInt(document.getElementById('sim-doctors').value, 10) || 4;
+      const avgConsult = parseInt(document.getElementById('sim-consult').value, 10) || 10;
+      const spread = parseInt(document.getElementById('sim-spread').value, 10) || 300;
+      return Math.round(((numPatients * avgConsult) / (numDoctors * spread)) * 100);
+    }
+
+    function updateOfferedLoadDisplay(loadPercent) {
+      const loadVal = loadPercent !== undefined ? loadPercent : calculateCurrentOfferedLoad();
+      const loadEl = document.getElementById('val-offered-load');
+      if (loadEl) loadEl.textContent = `${loadVal} percent`;
+      const badgeEl = document.getElementById('sim-overloaded-badge');
+      if (badgeEl) {
+        if (loadVal > 100) {
+          badgeEl.style.display = 'flex';
+        } else {
+          badgeEl.style.display = 'none';
+        }
+      }
+    }
+
+    function markCustom() {
+      document.getElementById('sim-preset').value = 'custom';
+      updateOfferedLoadDisplay();
+    }
+
+    function randomiseSeed() {
+      const newSeed = Math.floor(Math.random() * 90000) + 10000;
+      document.getElementById('sim-seed').value = newSeed;
+      markCustom();
+      triggerSimulation();
+    }
+
+    function getSimConfig() {
+      return {
+        numPatients: parseInt(document.getElementById('sim-patients').value, 10),
+        numDoctors: parseInt(document.getElementById('sim-doctors').value, 10),
+        avgConsultMinutes: parseInt(document.getElementById('sim-consult').value, 10),
+        emergencyPercent: parseInt(document.getElementById('sim-emerg').value, 10),
+        scheduledPercent: parseInt(document.getElementById('sim-scheduled').value, 10),
+        arrivalSpreadMinutes: parseInt(document.getElementById('sim-spread').value, 10),
+        randomSeed: parseInt(document.getElementById('sim-seed').value, 10) || 12345
+      };
+    }
+
+    // Run Simulation with backend REST API integration and loading feedback
+    async function triggerSimulation() {
+      const btn = document.getElementById('btn-run-sim');
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10"></path>
+        </svg>
+        <span>Simulating (REST API)...</span>
+      `;
+
+      try {
+        const config = getSimConfig();
+        const t0 = performance.now();
+        const rawResult = await SmartOPDApi.post('/api/simulation/run', config);
+        currentSimResults = SmartOPDAdapters.adaptSimulationResult(rawResult);
+        const elapsed = (performance.now() - t0).toFixed(1);
+
+        renderSimulationResults(currentSimResults);
+        SmartOPD.showToast('Simulation Complete', `Processed ${config.numPatients} patients in ${elapsed}ms via backend REST API.`, 'success');
+      } catch (err) {
+        console.error('Simulation execution failed:', err);
+        const msg = err.data && err.data.message ? err.data.message : err.message;
+        SmartOPD.showToast('Simulation Failed', msg, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>Run Discrete Simulation</span>
+        `;
+      }
+    }
+
+    // Render Metrics Table, Insights and Charts
+    function renderSimulationResults(res) {
+      const { policies, insights, offeredLoadPercent } = res;
+      const { fcfs, strictPriority, smartopd } = policies;
+
+      // Update Offered Load & Warning Badge
+      updateOfferedLoadDisplay(offeredLoadPercent);
+
+      // 1. Key Insights
+      const insightsListEl = document.getElementById('insights-list');
+      insightsListEl.innerHTML = insights.map(txt => `<li>${txt}</li>`).join('');
+
+      // 2. Metrics Table with Row Highlighting
+      const metricsConfig = [
+        { key: 'averageWaitOverall', label: 'Average Wait (Overall)', unit: 'm', lowerIsBetter: true },
+        { key: 'averageWaitEmergency', label: 'Emergency Avg Wait', unit: 'm', lowerIsBetter: true },
+        { key: 'averageWaitHighSeverity', label: 'High Severity (Sev 4–5) Avg Wait', unit: 'm', lowerIsBetter: true },
+        { key: 'averageWaitScheduled', label: 'Scheduled Patients Avg Wait', unit: 'm', lowerIsBetter: true },
+        { key: 'p90Wait', label: '90th Percentile Wait (P90)', unit: 'm', lowerIsBetter: true },
+        { key: 'maxScheduledWait', label: 'Maximum Scheduled Wait', unit: 'm', lowerIsBetter: true },
+        { key: 'starvationCount', label: 'Starvation Count (>2x SLA)', unit: 'patients', lowerIsBetter: true },
+        { key: 'doctorIdlePercent', label: 'Doctor Idle Time', unit: '%', lowerIsBetter: true }
+      ];
+
+      const tbody = document.getElementById('metrics-table-body');
+      tbody.innerHTML = metricsConfig.map(m => {
+        const vFcfs = fcfs.metrics[m.key];
+        const vStrict = strictPriority.metrics[m.key];
+        const vSmart = smartopd.metrics[m.key];
+
+        // Determine best value
+        const vals = [vFcfs, vStrict, vSmart];
+        const bestVal = m.lowerIsBetter ? Math.min(...vals) : Math.max(...vals);
+
+        const formatVal = (v) => {
+          const isBest = v === bestVal;
+          let display = '';
+          if (m.key === 'starvationCount') {
+            display = `${v} ${v === 1 ? 'patient' : 'patients'}`;
+          } else {
+            display = `${v}${m.unit}`;
+          }
+          return isBest ? `<span class="best-metric">${display}</span>` : `<span>${display}</span>`;
+        };
+
+        return `
+          <tr>
+            <td style="font-weight: 600; color: var(--navy-dark);">${m.label}</td>
+            <td>${formatVal(vFcfs)}</td>
+            <td>${formatVal(vStrict)}</td>
+            <td style="background: rgba(15, 118, 110, 0.03);">${formatVal(vSmart)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // 3. Chart 1: "Who waits?" Grouped Bar Chart of Wait Times by Category (Emergency, Scheduled, Walk-in)
+      // Extract category averages for each policy
+      function getCategoryAvg(records, catFilter) {
+        const matching = records.filter(catFilter);
+        if (!matching.length) return 0;
+        const total = matching.reduce((sum, r) => sum + r.waitMinutes, 0);
+        return Math.round(total / matching.length);
+      }
+
+      const categories = ['Emergency', 'Scheduled', 'Walk-in'];
+      const fcfsCatWaits = [
+        getCategoryAvg(fcfs.records, r => r.category === 'Emergency'),
+        getCategoryAvg(fcfs.records, r => r.category === 'Scheduled'),
+        getCategoryAvg(fcfs.records, r => r.category === 'Walk-in')
+      ];
+      const strictCatWaits = [
+        getCategoryAvg(strictPriority.records, r => r.category === 'Emergency'),
+        getCategoryAvg(strictPriority.records, r => r.category === 'Scheduled'),
+        getCategoryAvg(strictPriority.records, r => r.category === 'Walk-in')
+      ];
+      const smartCatWaits = [
+        getCategoryAvg(smartopd.records, r => r.category === 'Emergency'),
+        getCategoryAvg(smartopd.records, r => r.category === 'Scheduled'),
+        getCategoryAvg(smartopd.records, r => r.category === 'Walk-in')
+      ];
+
+      SmartOPDCharts.renderGroupedBarChart('chart-cat-waits', {
+        title: 'Who waits? Average Wait by Category',
+        categories,
+        series: [
+          { name: 'FCFS', color: '#94A3B8', values: fcfsCatWaits },
+          { name: 'Strict Priority', color: '#F59E0B', values: strictCatWaits },
+          { name: 'SmartOPD', color: '#0F766E', values: smartCatWaits }
+        ],
+        height: 260,
+        yLabel: 'Mins'
+      });
+
+      // 4. Chart 2: Starvation Counts Comparison Bar Chart
+      const starvationData = [
+        { label: 'FCFS', value: fcfs.metrics.starvationCount, color: '#94A3B8' },
+        { label: 'Strict Priority', value: strictPriority.metrics.starvationCount, color: '#F59E0B' },
+        { label: 'SmartOPD', value: smartopd.metrics.starvationCount, color: '#0F766E' }
+      ];
+      SmartOPDCharts.renderBarChart('chart-starvation', {
+        data: starvationData,
+        xKey: 'label',
+        yKey: 'value',
+        height: 260,
+        getColor: (d) => d.color,
+        yLabel: 'Starved'
+      });
+
+      // 5. Chart 3: Wait Progression Across Arrival Order (Sampling up to 30 points)
+      const sortedSmartRecords = [...smartopd.records].sort((a, b) => a.arrivalTime - b.arrivalTime);
+      const step = Math.max(1, Math.floor(sortedSmartRecords.length / 25));
+      const trendData = [];
+      for (let i = 0; i < sortedSmartRecords.length; i += step) {
+        trendData.push({
+          x: `#${i + 1}`,
+          y: sortedSmartRecords[i].waitMinutes
+        });
+      }
+
+      SmartOPDCharts.renderLineChart('chart-wait-progression', {
+        data: trendData,
+        xKey: 'x',
+        yKey: 'y',
+        height: 220,
+        strokeColor: SmartOPDCharts.COLORS.tealPrimary,
+        yLabel: 'Wait (m)'
+      });
+    }
+
+    // CSV Download
+    function exportResultsCSV() {
+      if (!currentSimResults) {
+        SmartOPD.showToast('No Data', 'Run a simulation first before exporting.', 'warning');
+        return;
+      }
+
+      const { policies, config } = currentSimResults;
+      const headers = ['PatientID', 'Category', 'Severity', 'ArrivalTime', 'FCFS_Wait', 'Strict_Wait', 'SmartOPD_Wait', 'SmartOPD_Starved'];
+      const rows = [headers.join(',')];
+
+      policies.smartopd.records.forEach((sRec, idx) => {
+        const fRec = policies.fcfs.records[idx] || {};
+        const stRec = policies.strictPriority.records[idx] || {};
+
+        rows.push([
+          sRec.patientId,
+          sRec.category,
+          sRec.severity,
+          sRec.arrivalTime,
+          fRec.waitMinutes || 0,
+          stRec.waitMinutes || 0,
+          sRec.waitMinutes,
+          sRec.starved ? 'YES' : 'NO'
+        ].join(','));
+      });
+
+      const csvContent = rows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `smartopd-simulation-seed${config.randomSeed}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      SmartOPD.showToast('Export Complete', 'Simulation records saved as CSV.', 'success');
+    }
+
+    // Render Today's Live OPD Operational Data
+    async function renderTodayLiveData() {
+      let analytics = null;
+      try {
+        const raw = await SmartOPDApi.get('/api/analytics');
+        analytics = SmartOPDAdapters.adaptAnalytics(raw);
+      } catch (err) {
+        console.error('Failed to fetch live analytics telemetry:', err);
+        return;
+      }
+      if (!analytics) return;
+
+      // Update KPI counters
+      const elTotal = document.getElementById('live-total-patients');
+      if (elTotal) elTotal.textContent = analytics.totalPatients;
+
+      const elFairness = document.getElementById('live-fairness-boosts');
+      if (elFairness) elFairness.textContent = analytics.fairnessBoostCount;
+
+      const elEmerg = document.getElementById('live-emerg-overrides');
+      if (elEmerg) elEmerg.textContent = analytics.emergencyOverrideCount;
+
+      const elNoShow = document.getElementById('live-noshow-count');
+      if (elNoShow) elNoShow.textContent = analytics.noShowCount;
+
+      const elLongest = document.getElementById('live-longest-wait');
+      if (elLongest) {
+        if (analytics.longestWait && analytics.longestWait.minutes > 0) {
+          elLongest.textContent = `${analytics.longestWait.minutes}m (${analytics.longestWait.tokenNumber})`;
+        } else {
+          elLongest.textContent = '0m (None)';
+        }
+      }
+
+      const elUtil = document.getElementById('live-doc-util');
+      if (elUtil) elUtil.textContent = `${analytics.overallDoctorUtilisation}%`;
+
+      // 1. Line Chart: Patients Per Hour
+      if (document.getElementById('live-chart-hourly')) {
+        SmartOPDCharts.renderLineChart('live-chart-hourly', {
+          title: 'Patients Registered per Hour',
+          data: (analytics.patientsPerHour || []).map(b => ({ x: b.label, y: b.count })),
+          xKey: 'x',
+          yKey: 'y',
+          height: 220,
+          strokeColor: SmartOPDCharts.COLORS.tealPrimary,
+          yLabel: 'Patients'
+        });
+      }
+
+      // 2. Donut Chart: Category Split
+      if (document.getElementById('live-chart-categories')) {
+        const catData = [
+          { label: 'Emergency', value: analytics.totalsByCategory?.Emergency || 0, color: SmartOPDCharts.COLORS.emergencyRed },
+          { label: 'Scheduled', value: analytics.totalsByCategory?.Scheduled || 0, color: SmartOPDCharts.COLORS.blueScheduled },
+          { label: 'Walk-in', value: analytics.totalsByCategory?.['Walk-in'] || 0, color: SmartOPDCharts.COLORS.tealPrimary }
+        ];
+        SmartOPDCharts.renderDonutChart('live-chart-categories', {
+          title: 'Patient Intake by Category',
+          data: catData,
+          size: 190,
+          thickness: 30,
+          centerLabel: String(analytics.totalPatients),
+          centerSub: 'Total'
+        });
+      }
+
+      // 3. Bar Chart: Average Wait per Doctor
+      if (document.getElementById('live-chart-doc-waits')) {
+        const docWaitData = (analytics.averageWaitPerDoctor || []).map(d => ({
+          label: d.doctorName.replace('Dr. ', ''),
+          value: d.avgWaitMinutes,
+          color: SmartOPDCharts.COLORS.tealPrimary
+        }));
+        SmartOPDCharts.renderBarChart('live-chart-doc-waits', {
+          title: 'Average Wait per Doctor',
+          data: docWaitData,
+          xKey: 'label',
+          yKey: 'value',
+          height: 220,
+          yLabel: 'Mins'
+        });
+      }
+
+      // 4. Bar Chart: Severity Distribution
+      if (document.getElementById('live-chart-severity')) {
+        const sevData = [
+          { label: 'Sev 1', value: analytics.severityDistribution?.[1] || 0, severity: 1 },
+          { label: 'Sev 2', value: analytics.severityDistribution?.[2] || 0, severity: 2 },
+          { label: 'Sev 3', value: analytics.severityDistribution?.[3] || 0, severity: 3 },
+          { label: 'Sev 4', value: analytics.severityDistribution?.[4] || 0, severity: 4 },
+          { label: 'Sev 5', value: analytics.severityDistribution?.[5] || 0, severity: 5 }
+        ];
+        SmartOPDCharts.renderBarChart('live-chart-severity', {
+          title: 'Clinical Severity Triage Distribution',
+          data: sevData,
+          xKey: 'label',
+          yKey: 'value',
+          height: 220,
+          getColor: (d) => SmartOPDCharts.COLORS.sevColors[d.severity] || SmartOPDCharts.COLORS.tealPrimary,
+          yLabel: 'Patients'
+        });
+      }
+
+      // 5. Doctor Utilisation Table
+      const utilTbody = document.getElementById('live-doc-util-tbody');
+      if (utilTbody) {
+        if (!analytics.doctorUtilisation || analytics.doctorUtilisation.length === 0) {
+          utilTbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                No physician consultation records found for today. Add doctors on the Doctors page to track live OPD utilisation.
+              </td>
+            </tr>
+          `;
+        } else {
+          utilTbody.innerHTML = analytics.doctorUtilisation.map(doc => {
+            let statusBadge = '<span class="badge badge-walkin">Available</span>';
+            if (doc.status === 'On Break') statusBadge = '<span class="badge" style="background:#FEF3C7; color:#92400E;">On Break</span>';
+            else if (doc.status === 'Off Duty') statusBadge = '<span class="badge" style="background:#F1F5F9; color:#64748B;">Off Duty</span>';
+
+            return `
+              <tr>
+                <td style="font-weight: 600; color: var(--navy-dark);">${doc.doctorName}</td>
+                <td class="text-xs text-muted">${doc.department} (${doc.room})</td>
+                <td>${statusBadge}</td>
+                <td style="font-weight: 600;">${doc.completedCount}</td>
+                <td style="font-weight: 600;">${doc.waitingCount}</td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="flex: 1; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
+                      <div style="width: ${doc.utilisationPercent}%; height: 100%; background: ${doc.utilisationPercent > 80 ? 'var(--primary-teal)' : '#0284C7'};"></div>
+                    </div>
+                    <span style="font-size: 0.75rem; font-weight: 700; width: 34px; text-align: right;">${doc.utilisationPercent}%</span>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    // Initialize presets from backend API and render live telemetry
+    loadPresetsFromApi();
+    renderTodayLiveData();
+  </script>
+</body>
+</html>

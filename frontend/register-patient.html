@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Patient – SmartOPD</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+
+  <style>
+    /* Two-column layout: Form (left) + Live Preview (right) */
+    .register-layout {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 28px;
+      align-items: flex-start;
+    }
+
+    .form-section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* Category Cards Selector */
+    .category-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .category-card {
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 14px 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      background: #FFFFFF;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .category-card:hover {
+      border-color: var(--primary-teal);
+      background-color: var(--primary-teal-subtle);
+    }
+
+    .category-card.active {
+      border-color: var(--primary-teal);
+      background-color: rgba(15, 118, 110, 0.08);
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2);
+    }
+
+    .category-card.cat-emergency.active {
+      border-color: var(--sev-5-emergency);
+      background-color: var(--sev-5-bg);
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+    }
+
+    .category-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .cat-scheduled .category-icon { background: rgba(37, 99, 235, 0.12); color: #2563EB; }
+    .cat-walkin .category-icon    { background: rgba(99, 102, 241, 0.12); color: #6366F1; }
+    .cat-emergency .category-icon { background: rgba(220, 38, 38, 0.15); color: #DC2626; }
+
+    .category-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      line-height: 1.2;
+    }
+
+    .category-desc {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Severity Level Selector (1 to 5) */
+    .severity-selector-group {
+      margin-bottom: 20px;
+    }
+
+    .severity-buttons-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .sev-btn {
+      padding: 10px 4px;
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: #FFFFFF;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .sev-btn:hover:not(:disabled) {
+      border-color: var(--primary-teal);
+      transform: translateY(-1px);
+    }
+
+    .sev-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: #F1F5F9;
+      border-color: #E2E8F0;
+    }
+
+    .sev-btn.active.sev-1, .sev-btn.active.sev-2 {
+      border-color: var(--sev-low);
+      background: var(--sev-low-bg);
+      color: #15803D;
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
+    }
+
+    .sev-btn.active.sev-3 {
+      border-color: var(--sev-3-medium);
+      background: var(--sev-3-bg);
+      color: #B45309;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+    }
+
+    .sev-btn.active.sev-4 {
+      border-color: var(--sev-4-high);
+      background: var(--sev-4-bg);
+      color: #C2410C;
+      box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25);
+    }
+
+    .sev-btn.active.sev-5 {
+      border-color: var(--sev-5-emergency);
+      background: var(--sev-5-bg);
+      color: var(--sev-5-emergency);
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
+    }
+
+    .sev-guidance-text {
+      font-size: 0.8125rem;
+      padding: 8px 12px;
+      border-radius: var(--radius-xs);
+      background-color: var(--bg-page);
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .emergency-override-alert {
+      display: none;
+      background-color: var(--sev-5-bg);
+      border: 1.5px solid var(--sev-5-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-top: 10px;
+      font-size: 0.8125rem;
+      color: #991B1B;
+      font-weight: 600;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .emergency-override-alert.active {
+      display: flex;
+    }
+
+    /* Live Preview Sticky Card */
+    .preview-card-sticky {
+      position: sticky;
+      top: 92px;
+      background: #FFFFFF;
+      border-radius: 16px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .preview-header {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--primary-teal) 100%);
+      color: #FFFFFF;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .preview-body {
+      padding: 24px;
+    }
+
+    .preview-token-display {
+      text-align: center;
+      padding: 20px;
+      background: var(--bg-page);
+      border-radius: var(--radius-md);
+      border: 1.5px dashed var(--border-medium);
+      margin-bottom: 20px;
+    }
+
+    .preview-token-number {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: var(--primary-teal);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .preview-position-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(15, 118, 110, 0.08);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(15, 118, 110, 0.2);
+      margin-bottom: 18px;
+    }
+
+    .preview-position-banner.emergency-position {
+      background: var(--sev-5-bg);
+      border-color: var(--sev-5-border);
+    }
+
+    .preview-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.8125rem;
+    }
+
+    .preview-detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .preview-explanation-box {
+      margin-top: 18px;
+      padding: 14px;
+      background: var(--fairness-bg);
+      border: 1px solid var(--fairness-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      color: var(--navy-dark);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .preview-explanation-box svg {
+      color: var(--fairness-violet);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 991px) {
+      .register-layout { grid-template-columns: 1fr; }
+      .preview-card-sticky { position: static; margin-top: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Sidebar -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="reception-dashboard.html" class="sidebar-brand">
+          <div class="brand-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+            <span class="brand-subtext">Reception Desk</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">RECEPTION MENU</div>
+        <ul class="nav-list" id="sidebar-nav-links">
+          <!-- Populated by app.js -->
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-logout-btn" id="logout-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="topbar-heading">
+            <h1 class="page-title">Register Patient & Dispense Token</h1>
+            <span class="page-subtitle">Clinical Triage Intake, Category Classification & Dynamic Queue Placement</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="live-clock-card" title="Current Hospital Time">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="live-clock">--:--:--</span>
+          </div>
+
+          <div class="user-profile-chip" id="user-chip"></div>
+        </div>
+      </header>
+
+      <main class="app-content">
+        <div id="page-error-state" style="display:none; margin-bottom: 20px;" class="card">
+          <div class="card-body" style="padding: 24px; text-align: center;">
+            <p id="page-error-msg" style="color: var(--sev-5-emergency); font-weight: 600; margin-bottom: 12px;"></p>
+            <button type="button" class="btn btn-secondary" id="btn-retry-load">Retry Loading</button>
+          </div>
+        </div>
+
+        <div class="register-layout">
+          
+          <!-- LEFT COLUMN: Patient Registration Form -->
+          <div class="card">
+            <div class="card-body" style="padding: 32px;">
+              
+              <form id="registration-form" novalidate>
+                
+                <!-- 1. Patient Demographics -->
+                <div class="form-section-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span>1. Patient Demographics</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="reg-name">Patient Full Name <span class="required">*</span></label>
+                  <input type="text" id="reg-name" class="form-control" placeholder="e.g. Anand Sharma" required autocomplete="off">
+                  <div class="form-error" id="err-name">Please enter patient name.</div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label" for="reg-age">Age (Years) <span class="required">*</span></label>
+                    <input type="number" id="reg-age" class="form-control" placeholder="Age" min="1" max="120" required>
+                    <div class="form-error" id="err-age">Enter valid age.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="reg-gender">Gender <span class="required">*</span></label>
+                    <select id="reg-gender" class="form-select">
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="reg-phone">10-Digit Mobile <span class="required">*</span></label>
+                    <input type="tel" id="reg-phone" class="form-control" placeholder="98XXXXXXXX" maxlength="10" required>
+                    <div class="form-error" id="err-phone">Must be 10 digits.</div>
+                  </div>
+                </div>
+
+                <!-- 2. Patient Category Selection -->
+                <div class="form-section-title mt-4">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                  </svg>
+                  <span>2. Admission Category</span>
+                </div>
+
+                <div class="category-cards-grid" role="radiogroup" aria-label="Patient Category">
+                  <!-- Scheduled -->
+                  <div class="category-card cat-scheduled" data-category="Scheduled" tabindex="0">
+                    <div class="category-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                    </div>
+                    <span class="category-title">Scheduled</span>
+                    <span class="category-desc">Pre-booked slot</span>
+                  </div>
+
+                  <!-- Walk-in -->
+                  <div class="category-card cat-walkin active" data-category="Walk-in" tabindex="0">
+                    <div class="category-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                      </svg>
+                    </div>
+                    <span class="category-title">Walk-in</span>
+                    <span class="category-desc">Same-day OPD visit</span>
+                  </div>
+
+                  <!-- Emergency -->
+                  <div class="category-card cat-emergency" data-category="Emergency" tabindex="0">
+                    <div class="category-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                      </svg>
+                    </div>
+                    <span class="category-title" style="color: var(--sev-5-emergency);">Emergency</span>
+                    <span class="category-desc">Priority Override</span>
+                  </div>
+                </div>
+
+                <!-- 3. Clinical Triage Severity (1 to 5) -->
+                <div class="form-section-title mt-4">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                  <span>3. Clinical Triage Severity (Levels 1–5)</span>
+                </div>
+
+                <div class="severity-selector-group">
+                  <div class="severity-buttons-row">
+                    <button type="button" class="sev-btn sev-1" data-sev="1">
+                      <span>Sev 1</span>
+                      <span class="text-xs font-normal">Routine</span>
+                    </button>
+                    <button type="button" class="sev-btn sev-2 active" data-sev="2">
+                      <span>Sev 2</span>
+                      <span class="text-xs font-normal">Low</span>
+                    </button>
+                    <button type="button" class="sev-btn sev-3" data-sev="3">
+                      <span>Sev 3</span>
+                      <span class="text-xs font-normal">Medium</span>
+                    </button>
+                    <button type="button" class="sev-btn sev-4" data-sev="4">
+                      <span>Sev 4</span>
+                      <span class="text-xs font-normal">High</span>
+                    </button>
+                    <button type="button" class="sev-btn sev-5" data-sev="5">
+                      <span>Sev 5</span>
+                      <span class="text-xs font-normal">Emergency</span>
+                    </button>
+                  </div>
+
+                  <!-- Guidance line for selected severity level -->
+                  <div class="sev-guidance-text" id="sev-guidance-display">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span id="sev-guidance-msg">Level 2: Mild symptoms / non-urgent examination.</span>
+                  </div>
+
+                  <!-- Emergency Level 5 Alert Notice -->
+                  <div class="emergency-override-alert" id="emergency-notice">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Emergency override: patient will be placed first in queue (Score 10,000).</span>
+                  </div>
+                </div>
+
+                <!-- 4. Clinical Department & Doctor -->
+                <div class="form-section-title mt-4">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span>4. Department & Doctor Assignment</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="form-group">
+                    <label class="form-label" for="reg-dept">Clinical Department <span class="required">*</span></label>
+                    <select id="reg-dept" class="form-select" required>
+                      <!-- Populated dynamically -->
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="reg-doctor">Consulting Doctor <span class="required">*</span></label>
+                    <select id="reg-doctor" class="form-select" required>
+                      <!-- Filtered by department -->
+                    </select>
+                    <div class="form-error" id="err-doctor">Doctor is unavailable or off duty.</div>
+                  </div>
+                </div>
+
+                <!-- Doctor Off Duty Warning banner -->
+                <div id="doctor-offduty-warning" style="display:none; padding:10px 14px; background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; color:#DC2626; font-size:0.8125rem; margin-bottom:16px;">
+                  This doctor is currently <strong>Off Duty</strong>. Cannot register new patients for this room.
+                </div>
+
+                <!-- Preferred Time Slot (Scheduled category only) -->
+                <div class="form-group" id="slot-container" style="display: none;">
+                  <label class="form-label" for="reg-slot">Preferred Appointment Time Slot <span class="required">*</span></label>
+                  <select id="reg-slot" class="form-select">
+                    <!-- Populated with 10-minute intervals within working hours -->
+                  </select>
+                  <div class="form-help">10-minute slot intervals based on doctor's schedule.</div>
+                  <div class="form-error" id="err-slot">Please select an appointment slot.</div>
+                </div>
+
+                <!-- Chief Complaint -->
+                <div class="form-group">
+                  <label class="form-label" for="reg-complaint">Chief Clinical Complaint / Symptoms (Optional)</label>
+                  <textarea id="reg-complaint" class="form-control" rows="2" placeholder="e.g. Chest pain radiating to left shoulder, fever for 2 days"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-4" id="btn-submit-registration">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Generate OPD Token & Place in Queue</span>
+                </button>
+
+              </form>
+
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Live Interactive Preview Card -->
+          <div>
+            <div class="preview-card-sticky">
+              <div class="preview-header">
+                <div>
+                  <h3 style="color: #FFFFFF; margin-bottom: 2px; font-size: 1.15rem;">Live Queue Preview</h3>
+                  <span class="text-xs" style="color: rgba(255,255,255,0.7);">Predicted Queue Placement & Timing</span>
+                </div>
+                <div class="badge badge-scheduled" id="preview-category-badge">Walk-in</div>
+              </div>
+
+              <div class="preview-body">
+                <!-- Large Token Display -->
+                <div class="preview-token-display">
+                  <span class="text-xs text-muted" style="display:block; text-transform: uppercase; letter-spacing:0.06em; margin-bottom: 4px;">Predicted Token Slip</span>
+                  <div class="preview-token-number" id="preview-token-num">---</div>
+                  <span class="text-xs text-teal font-semibold" id="preview-dept-name">OPD Department</span>
+                </div>
+
+                <!-- Position in Queue Banner -->
+                <div class="preview-position-banner" id="preview-position-box">
+                  <div>
+                    <span class="text-xs text-muted" style="display:block;">Predicted Queue Position</span>
+                    <strong style="font-size: 1.15rem; color: var(--navy-dark);" id="preview-position-text">Pending selection</strong>
+                  </div>
+                  <div id="preview-sev-pill">
+                    <span class="sev-pill sev-pill-2">Sev 2</span>
+                  </div>
+                </div>
+
+                <!-- Breakdown Details -->
+                <div class="preview-detail-row">
+                  <span class="text-muted">Patient Name:</span>
+                  <strong id="preview-patient-name">—</strong>
+                </div>
+
+                <div class="preview-detail-row">
+                  <span class="text-muted">Doctor:</span>
+                  <strong id="preview-doctor-name">—</strong>
+                </div>
+
+                <div class="preview-detail-row">
+                  <span class="text-muted">Consultation Suite:</span>
+                  <span id="preview-room">—</span>
+                </div>
+
+                <div class="preview-detail-row">
+                  <span class="text-muted">Est. Consultation Start:</span>
+                  <strong class="text-teal" id="preview-start-time">—</strong>
+                </div>
+
+                <!-- Explainability Rationale Box -->
+                <div class="preview-explanation-box" id="preview-explain-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <div>
+                    <strong style="display:block; font-size: 0.75rem; text-transform: uppercase; letter-spacing:0.05em; color: var(--fairness-violet); margin-bottom: 2px;">
+                      Explainable Placement Reason
+                    </strong>
+                    <span id="preview-explain-text">Dynamic explainable reason will be computed automatically.</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Shared App & API Scripts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // Role Guard: Require Receptionist (Front Desk)
+    SmartOPD.requireAuth(['Receptionist']);
+    SmartOPD.initLayout('register');
+
+    // Severity Guidance Text Table
+    const SEV_GUIDANCE = {
+      1: 'Level 1: Routine check-up / minor discomfort / standard follow-up.',
+      2: 'Level 2: Mild symptoms / non-urgent examination.',
+      3: 'Level 3: Moderate pain / semi-urgent clinical attention.',
+      4: 'Level 4: Severe pain / urgent clinical evaluation required.',
+      5: 'Level 5: Critical emergency / life-threatening override (Immediate resuscitation).'
+    };
+
+    // State Variables
+    let currentCategory = 'Walk-in';
+    let currentSeverity = 2;
+    let currentDoctor = null;
+    let allDepartments = [];
+    let allDoctors = [];
+    let previewRequestId = 0;
+    let previewTimeout = null;
+
+    // DOM Elements
+    const categoryCards = document.querySelectorAll('.category-card');
+    const sevButtons = document.querySelectorAll('.sev-btn');
+    const sevGuidanceMsg = document.getElementById('sev-guidance-msg');
+    const emergencyNotice = document.getElementById('emergency-notice');
+    const deptSelect = document.getElementById('reg-dept');
+    const doctorSelect = document.getElementById('reg-doctor');
+    const slotContainer = document.getElementById('slot-container');
+    const slotSelect = document.getElementById('reg-slot');
+    const offDutyWarning = document.getElementById('doctor-offduty-warning');
+    const submitBtn = document.getElementById('btn-submit-registration');
+    const pageErrorState = document.getElementById('page-error-state');
+    const pageErrorMsg = document.getElementById('page-error-msg');
+    const btnRetryLoad = document.getElementById('btn-retry-load');
+
+    // Preview Elements
+    const previewCategoryBadge = document.getElementById('preview-category-badge');
+    const previewTokenNum = document.getElementById('preview-token-num');
+    const previewDeptName = document.getElementById('preview-dept-name');
+    const previewPositionBox = document.getElementById('preview-position-box');
+    const previewPositionText = document.getElementById('preview-position-text');
+    const previewSevPill = document.getElementById('preview-sev-pill');
+    const previewPatientName = document.getElementById('preview-patient-name');
+    const previewDoctorName = document.getElementById('preview-doctor-name');
+    const previewRoom = document.getElementById('preview-room');
+    const previewStartTime = document.getElementById('preview-start-time');
+    const previewExplainText = document.getElementById('preview-explain-text');
+
+    // 1. Load Departments & Doctors from API
+    async function loadData() {
+      if (pageErrorState) pageErrorState.style.display = 'none';
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const [depts, docs] = await Promise.all([
+          SmartOPDApi.get('/api/departments'),
+          SmartOPDApi.get('/api/doctors')
+        ]);
+
+        allDepartments = Array.isArray(depts) ? depts : [];
+        allDoctors = Array.isArray(docs) ? docs : [];
+
+        renderDropdowns();
+      } catch (err) {
+        if (pageErrorState) {
+          pageErrorState.style.display = 'block';
+          pageErrorMsg.textContent = err.message || 'Cannot load departments and doctors from server.';
+        }
+        SmartOPD.showToast('Load Error', err.message || 'Cannot load OPD data from server', 'error');
+      }
+    }
+
+    // 2. Render Dropdowns
+    function renderDropdowns() {
+      // Populate Departments
+      deptSelect.innerHTML = allDepartments.map(d => `
+        <option value="${d.code}">${d.name} (${d.code})</option>
+      `).join('');
+
+      // Check URL Query params (e.g. ?emergency=true or ?doctor=...)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('emergency') === 'true') {
+        setCategory('Emergency');
+        setSeverity(5);
+      }
+
+      const initialDoctorId = params.get('doctor');
+      if (initialDoctorId) {
+        const found = allDoctors.find(d => d.id === initialDoctorId);
+        if (found) {
+          deptSelect.value = found.deptCode;
+        }
+      }
+
+      onDepartmentChanged();
+    }
+
+    // 3. Department Changed Handler
+    function onDepartmentChanged() {
+      const selectedDeptCode = deptSelect.value;
+      const deptDoctors = allDoctors.filter(d => d.deptCode === selectedDeptCode || (d.department && d.department.includes(selectedDeptCode)));
+
+      doctorSelect.innerHTML = deptDoctors.map(d => {
+        let label = `${d.name} (${d.room})`;
+        if (d.status === 'On Break') label += ' [On Break]';
+        else if (d.status === 'Off Duty') label += ' [OFF DUTY]';
+        return `<option value="${d.id}">${label}</option>`;
+      }).join('');
+
+      onDoctorChanged();
+    }
+
+    // 4. Doctor Changed Handler
+    function onDoctorChanged() {
+      const docId = doctorSelect.value;
+      currentDoctor = allDoctors.find(d => d.id === docId) || null;
+
+      if (currentDoctor && currentDoctor.status === 'Off Duty') {
+        offDutyWarning.style.display = 'block';
+        submitBtn.disabled = true;
+      } else {
+        offDutyWarning.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+
+      populateAppointmentSlots();
+      scheduleLivePreview();
+    }
+
+    // 5. Generate 10-minute appointment slots within working hours
+    function populateAppointmentSlots() {
+      if (currentCategory !== 'Scheduled' || !currentDoctor) return;
+
+      const hours = currentDoctor.workingHours || '09:00 - 16:00';
+      let startStr = '09:00';
+      let endStr = '16:00';
+
+      if (typeof hours === 'string' && hours.includes('-')) {
+        const parts = hours.split('-').map(s => s.trim());
+        startStr = parts[0] || '09:00';
+        endStr = parts[1] || '16:00';
+      } else if (typeof hours === 'object' && hours.start && hours.end) {
+        startStr = hours.start;
+        endStr = hours.end;
+      }
+
+      const [startH, startM] = startStr.split(':').map(Number);
+      const [endH, endM] = endStr.split(':').map(Number);
+
+      const slots = [];
+      let cur = new Date();
+      cur.setHours(startH, startM, 0, 0);
+
+      const end = new Date();
+      end.setHours(endH, endM, 0, 0);
+
+      while (cur < end) {
+        const h = String(cur.getHours()).padStart(2, '0');
+        const m = String(cur.getMinutes()).padStart(2, '0');
+        const ampm = cur.getHours() >= 12 ? 'PM' : 'AM';
+        const displayH = cur.getHours() % 12 || 12;
+        slots.push({
+          value: `${h}:${m}`,
+          label: `${displayH}:${m} ${ampm}`
+        });
+        cur = new Date(cur.getTime() + 10 * 60000);
+      }
+
+      slotSelect.innerHTML = slots.map(s => `
+        <option value="${s.value}">${s.label}</option>
+      `).join('');
+    }
+
+    // 6. Category Selection
+    function setCategory(categoryName) {
+      currentCategory = categoryName;
+
+      categoryCards.forEach(c => {
+        if (c.getAttribute('data-category') === categoryName) {
+          c.classList.add('active');
+        } else {
+          c.classList.remove('active');
+        }
+      });
+
+      // Scheduled shows time slot selector
+      if (categoryName === 'Scheduled') {
+        slotContainer.style.display = 'block';
+        populateAppointmentSlots();
+      } else {
+        slotContainer.style.display = 'none';
+      }
+
+      // Emergency rules: severity 1, 2, 3 disabled, only 4 & 5 allowed
+      if (categoryName === 'Emergency') {
+        sevButtons.forEach(btn => {
+          const s = parseInt(btn.getAttribute('data-sev'), 10);
+          if (s < 4) {
+            btn.disabled = true;
+          } else {
+            btn.disabled = false;
+          }
+        });
+        if (currentSeverity < 4) {
+          setSeverity(5);
+        }
+      } else {
+        sevButtons.forEach(btn => btn.disabled = false);
+      }
+
+      scheduleLivePreview();
+    }
+
+    // 7. Severity Selection
+    function setSeverity(level) {
+      currentSeverity = level;
+
+      sevButtons.forEach(btn => {
+        const s = parseInt(btn.getAttribute('data-sev'), 10);
+        if (s === level) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Update guidance text
+      sevGuidanceMsg.textContent = SEV_GUIDANCE[level] || '';
+
+      // Emergency override alert banner
+      if (level === 5) {
+        emergencyNotice.classList.add('active');
+      } else {
+        emergencyNotice.classList.remove('active');
+      }
+
+      scheduleLivePreview();
+    }
+
+    // 8. Debounced Live Preview Schedule (300 ms debounce)
+    function scheduleLivePreview() {
+      if (previewTimeout) {
+        clearTimeout(previewTimeout);
+      }
+      previewTimeout = setTimeout(() => {
+        executeLivePreview();
+      }, 300);
+    }
+
+    // 9. Execute Live Preview via POST /api/patients/preview
+    async function executeLivePreview() {
+      if (!currentDoctor) return;
+
+      const nameVal = document.getElementById('reg-name').value.trim();
+      previewPatientName.textContent = nameVal || 'Pending entry...';
+
+      // Category badge
+      previewCategoryBadge.textContent = currentCategory;
+      if (currentCategory === 'Emergency') previewCategoryBadge.className = 'badge badge-emergency';
+      else if (currentCategory === 'Scheduled') previewCategoryBadge.className = 'badge badge-scheduled';
+      else previewCategoryBadge.className = 'badge badge-walkin';
+
+      // Doctor & Room
+      previewDoctorName.textContent = currentDoctor.name;
+      previewRoom.textContent = currentDoctor.room;
+      previewDeptName.textContent = `${currentDoctor.department} OPD`;
+
+      // Severity Pill
+      previewSevPill.innerHTML = `<span class="sev-pill sev-pill-${currentSeverity}">Sev ${currentSeverity}</span>`;
+
+      // API preview call with request ID guarding against out-of-order responses
+      const thisReqId = ++previewRequestId;
+      const ageVal = parseInt(document.getElementById('reg-age').value.trim(), 10);
+      const age = (!isNaN(ageVal) && ageVal >= 0 && ageVal <= 130) ? ageVal : 30;
+      const gender = document.getElementById('reg-gender').value || 'Other';
+      const phoneVal = document.getElementById('reg-phone').value.trim();
+      const phone = (/^\d{10}$/.test(phoneVal)) ? phoneVal : '9999999999';
+      const complaint = document.getElementById('reg-complaint').value.trim();
+      const slot = slotSelect.value;
+
+      try {
+        const previewPayload = {
+          name: nameVal || 'Patient Preview',
+          age: age,
+          gender: gender,
+          phone: phone,
+          category: currentCategory,
+          severity: currentSeverity,
+          doctorId: currentDoctor.id,
+          appointmentTime: currentCategory === 'Scheduled' ? (slot || '10:00') : null,
+          chiefComplaint: complaint || 'General consultation'
+        };
+
+        const res = await SmartOPDApi.post('/api/patients/preview', previewPayload);
+
+        // Discard response if another preview request was made in the meantime
+        if (thisReqId !== previewRequestId) return;
+
+        const preview = SmartOPDAdapters.adaptPatientPreview(res);
+        previewTokenNum.textContent = preview.tokenNumber;
+
+        if (currentSeverity === 5 || preview.isEmergencyOverride) {
+          previewPositionBox.className = 'preview-position-banner emergency-position';
+          previewPositionText.innerHTML = '<span style="color:var(--sev-5-emergency);">Position #1 (Emergency Override)</span>';
+          previewStartTime.textContent = preview.estimatedStartTime || 'Next Call (Immediate)';
+        } else {
+          previewPositionBox.className = 'preview-position-banner';
+          previewPositionText.textContent = `Position #${preview.position} in Queue`;
+          previewStartTime.textContent = preview.estimatedStartTime || `~${preview.estimatedWaitMinutes}m`;
+        }
+
+        previewExplainText.textContent = preview.explanation || 'Calculated placement based on current queue status.';
+      } catch (err) {
+        if (thisReqId !== previewRequestId) return;
+        previewExplainText.textContent = 'Preview note: ' + (err.message || 'Connecting to server...');
+      }
+    }
+
+    // Event Listeners
+    categoryCards.forEach(card => {
+      card.addEventListener('click', () => {
+        setCategory(card.getAttribute('data-category'));
+      });
+    });
+
+    sevButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!btn.disabled) {
+          setSeverity(parseInt(btn.getAttribute('data-sev'), 10));
+        }
+      });
+    });
+
+    deptSelect.addEventListener('change', onDepartmentChanged);
+    doctorSelect.addEventListener('change', onDoctorChanged);
+    slotSelect.addEventListener('change', scheduleLivePreview);
+    document.getElementById('reg-name').addEventListener('input', scheduleLivePreview);
+    document.getElementById('reg-age').addEventListener('input', scheduleLivePreview);
+    document.getElementById('reg-complaint').addEventListener('input', scheduleLivePreview);
+
+    if (btnRetryLoad) {
+      btnRetryLoad.addEventListener('click', loadData);
+    }
+
+    // Form Submission
+    document.getElementById('registration-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Clear errors
+      document.querySelectorAll('.form-error').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.form-control').forEach(el => el.classList.remove('is-invalid'));
+
+      const name = document.getElementById('reg-name').value.trim();
+      const age = document.getElementById('reg-age').value.trim();
+      const gender = document.getElementById('reg-gender').value;
+      const phone = document.getElementById('reg-phone').value.trim();
+      const complaint = document.getElementById('reg-complaint').value.trim();
+      const slot = slotSelect.value;
+
+      let hasError = false;
+
+      if (!name) {
+        document.getElementById('reg-name').classList.add('is-invalid');
+        document.getElementById('err-name').classList.add('active');
+        hasError = true;
+      }
+
+      if (!age || isNaN(age) || age <= 0) {
+        document.getElementById('reg-age').classList.add('is-invalid');
+        document.getElementById('err-age').classList.add('active');
+        hasError = true;
+      }
+
+      if (!phone || !/^\d{10}$/.test(phone)) {
+        document.getElementById('reg-phone').classList.add('is-invalid');
+        document.getElementById('err-phone').classList.add('active');
+        hasError = true;
+      }
+
+      if (currentCategory === 'Scheduled' && !slot) {
+        document.getElementById('err-slot').classList.add('active');
+        hasError = true;
+      }
+
+      if (!currentDoctor || currentDoctor.status === 'Off Duty') {
+        document.getElementById('err-doctor').classList.add('active');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      submitBtn.disabled = true;
+      const originalBtnHtml = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span>Registering Patient...</span>';
+
+      try {
+        const formData = {
+          name,
+          age: parseInt(age, 10),
+          gender,
+          phone,
+          category: currentCategory,
+          severity: currentSeverity,
+          doctorId: currentDoctor.id,
+          appointmentTime: currentCategory === 'Scheduled' ? slot : null,
+          chiefComplaint: complaint || null
+        };
+
+        const result = await SmartOPDApi.post('/api/patients', formData);
+        const slip = SmartOPDAdapters.adaptPatientSlip(result);
+        SmartOPD.showToast('Registration Successful', `Token ${slip.tokenNumber} issued (Position #${slip.position})`, 'success');
+
+        // Redirect to Token Slip page
+        setTimeout(() => {
+          window.location.href = `token-slip.html?token=${encodeURIComponent(slip.tokenNumber)}`;
+        }, 400);
+
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+        SmartOPD.showToast('Registration Failed', err.message || 'Failed to register patient', 'error');
+      }
+    });
+
+    // Initial Load
+    loadData();
+  </script>
+</body>
+</html>

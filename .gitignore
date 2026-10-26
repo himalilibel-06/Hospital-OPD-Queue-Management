@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+*.swp
+*.swo
+
+# Database files & SQLite journals
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+data/
+backend/data/
+
+# Log files
+*.log
+logs/
+
+# Java build target & archives
+target/
+backend/target/
+build/
+out/
+*.class
+*.jar
+*.war
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Scratch and temporary folders
+scratch/
+temp/

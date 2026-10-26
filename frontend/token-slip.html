@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPD Token Slip – SmartOPD</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+
+  <style>
+    /* ==========================================================================
+       Token Slip & Thermal Ticket Styles
+       ========================================================================== */
+    .slip-view-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 0;
+    }
+
+    .ticket-card {
+      width: 100%;
+      max-width: 440px;
+      background: #FFFFFF;
+      border-radius: 18px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Top decorative ticket notch */
+    .ticket-header {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--primary-teal) 100%);
+      color: #FFFFFF;
+      padding: 24px 28px 20px;
+      text-align: center;
+    }
+
+    .ticket-hospital-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .ticket-subheading {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Big Token Number Callout */
+    .ticket-token-section {
+      text-align: center;
+      padding: 24px 20px 16px;
+      background: var(--bg-page);
+      border-bottom: 2px dashed var(--border-light);
+      position: relative;
+    }
+
+    /* Notches on left & right of dashed line */
+    .ticket-token-section::before,
+    .ticket-token-section::after {
+      content: "";
+      position: absolute;
+      bottom: -11px;
+      width: 22px;
+      height: 22px;
+      background: var(--bg-page);
+      border-radius: 50%;
+      z-index: 2;
+    }
+    .ticket-token-section::before { left: -11px; }
+    .ticket-token-section::after  { right: -11px; }
+
+    .ticket-token-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .ticket-token-num {
+      font-size: 2.75rem;
+      font-weight: 900;
+      color: var(--navy-dark);
+      letter-spacing: 0.06em;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .ticket-badges-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Slip Body Content */
+    .ticket-body {
+      padding: 24px 28px;
+    }
+
+    .ticket-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #F1F5F9;
+      font-size: 0.875rem;
+    }
+
+    .ticket-row:last-child {
+      border-bottom: none;
+    }
+
+    .ticket-row .row-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .ticket-row .row-val {
+      color: var(--navy-dark);
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Queue Position Highlight Box */
+    .ticket-queue-pos-box {
+      margin: 16px 0;
+      padding: 14px 16px;
+      background: rgba(15, 118, 110, 0.08);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(15, 118, 110, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ticket-queue-pos-box.emergency-override {
+      background: var(--sev-5-bg);
+      border-color: var(--sev-5-border);
+    }
+
+    /* Explainability Callout Box */
+    .ticket-explanation-box {
+      padding: 12px 14px;
+      background: var(--fairness-bg);
+      border: 1px solid var(--fairness-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      color: var(--navy-dark);
+      margin-top: 14px;
+      line-height: 1.35;
+    }
+
+    .ticket-explanation-box strong {
+      display: block;
+      color: var(--fairness-violet);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 3px;
+    }
+
+    /* QR Code and Footer Timestamp */
+    .ticket-footer {
+      padding: 16px 28px 24px;
+      border-top: 1px dashed var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FAFCFD;
+    }
+
+    .ticket-qr-box {
+      width: 64px;
+      height: 64px;
+      background: #FFFFFF;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .ticket-footer-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+      line-height: 1.3;
+    }
+
+    /* Action Buttons Bar below Slip */
+    .slip-actions-bar {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ==========================================================================
+       Token Slips Table View (List Mode)
+       ========================================================================== */
+    .slips-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 650px;
+    }
+
+    .filter-pills-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-pill-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-medium);
+      background: #FFFFFF;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--navy-dark);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-pill-btn:hover {
+      background: var(--bg-page);
+    }
+
+    .filter-pill-btn.active {
+      background: var(--primary-teal);
+      color: #FFFFFF;
+      border-color: var(--primary-teal);
+    }
+
+    /* ==========================================================================
+       Print Stylesheet (@media print)
+       Only prints the ticket card formatted for thermal / A6 paper
+       ========================================================================== */
+    @media print {
+      body {
+        background: #FFFFFF !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .app-sidebar,
+      .app-topbar,
+      .sidebar-backdrop,
+      .slip-actions-bar,
+      .toast-container {
+        display: none !important;
+      }
+
+      .app-main,
+      .app-content,
+      .app-shell {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: auto !important;
+        background: transparent !important;
+      }
+
+      .slip-view-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .ticket-card {
+        border: 1px solid #000000 !important;
+        box-shadow: none !important;
+        max-width: 380px !important;
+        margin: 0 auto !important;
+        page-break-inside: avoid;
+      }
+
+      .ticket-header {
+        background: #0B2545 !important;
+        color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Sidebar -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="reception-dashboard.html" class="sidebar-brand">
+          <div class="brand-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+            <span class="brand-subtext">Token Slips</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">RECEPTION MENU</div>
+        <ul class="nav-list" id="sidebar-nav-links">
+          <!-- Populated by app.js -->
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-logout-btn" id="logout-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="topbar-heading">
+            <h1 class="page-title" id="slip-view-title">OPD Token Slips</h1>
+            <span class="page-subtitle">Printed Patient Tokens, Queue Priority & Explainable Timing</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="live-clock-card" title="Current Hospital Time">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="live-clock">--:--:--</span>
+          </div>
+
+          <div class="user-profile-chip" id="user-chip"></div>
+        </div>
+      </header>
+
+      <main class="app-content">
+        
+        <!-- ================================================================
+             MODE 1: SINGLE TOKEN SLIP TICKET VIEW (when ?token=XXXX is set)
+             ================================================================ -->
+        <div id="single-token-container" style="display: none;">
+          <div class="slip-view-wrapper">
+            
+            <div class="ticket-card" id="printable-ticket">
+              <!-- Ticket Header -->
+              <div class="ticket-header">
+                <div class="ticket-hospital-name">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M12 8v8M8 12h8"/>
+                  </svg>
+                  <span>SmartOPD Memorial Hospital</span>
+                </div>
+                <span class="ticket-subheading">Outpatient Department Token Slip</span>
+              </div>
+
+              <!-- Big Token Number -->
+              <div class="ticket-token-section">
+                <span class="ticket-token-label">OPD Queue Token</span>
+                <div class="ticket-token-num" id="slip-token-num">---</div>
+                <div class="ticket-badges-row">
+                  <span id="slip-category-badge" class="badge badge-emergency">Emergency</span>
+                  <span id="slip-severity-pill" class="sev-pill sev-pill-5">Sev 5</span>
+                </div>
+              </div>
+
+              <!-- Ticket Body -->
+              <div class="ticket-body">
+                <div class="ticket-row">
+                  <span class="row-label">Patient Name:</span>
+                  <span class="row-val" id="slip-patient-name">—</span>
+                </div>
+
+                <div class="ticket-row">
+                  <span class="row-label">Age / Gender:</span>
+                  <span class="row-val" id="slip-patient-age-gender">—</span>
+                </div>
+
+                <div class="ticket-row">
+                  <span class="row-label">Contact Phone:</span>
+                  <span class="row-val" id="slip-patient-phone">—</span>
+                </div>
+
+                <div class="ticket-row">
+                  <span class="row-label">Consulting Doctor:</span>
+                  <span class="row-val text-teal" id="slip-doctor-name">—</span>
+                </div>
+
+                <div class="ticket-row">
+                  <span class="row-label">OPD Room:</span>
+                  <span class="row-val" id="slip-doctor-room">—</span>
+                </div>
+
+                <div class="ticket-row">
+                  <span class="row-label">Clinical Dept:</span>
+                  <span class="row-val" id="slip-department">—</span>
+                </div>
+
+                <!-- Live Position Banner -->
+                <div class="ticket-queue-pos-box" id="slip-pos-box">
+                  <div>
+                    <span class="text-xs text-muted" style="display:block;">Current Queue Placement</span>
+                    <strong style="font-size: 1.15rem; color: var(--navy-dark);" id="slip-queue-position">Position #1</strong>
+                  </div>
+                  <div style="text-align: right;">
+                    <span class="text-xs text-muted" style="display:block;">Est. Consultation Start</span>
+                    <strong class="text-teal" id="slip-start-time">Next in Line</strong>
+                  </div>
+                </div>
+
+                <!-- Explainability Box -->
+                <div class="ticket-explanation-box">
+                  <strong>Why this position? (Explainable Queue Rationale)</strong>
+                  <span id="slip-explanation-text">Dynamic queue placement and prioritization rationale.</span>
+                </div>
+              </div>
+
+              <!-- Ticket Footer with Real Dynamic QR Code -->
+              <div class="ticket-footer">
+                <!-- Inline QR-Code container rendered by js/qr.js -->
+                <div class="ticket-qr-box" id="slip-qr-box" title="Scan with smartphone camera to track live">
+                  <!-- Real QR Code SVG injected by SmartOPDQR -->
+                </div>
+
+                <div class="ticket-footer-text">
+                  <span style="display:block; font-weight:600; color:var(--navy-dark);" id="slip-timestamp">10:45 AM • Today</span>
+                  <span>Keep this slip until called.</span><br>
+                  <a id="slip-track-link" href="patient-tracker.html" class="text-teal font-semibold" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px; margin-top:3px;">
+                    <span>Track this token</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons Bar -->
+            <div class="slip-actions-bar">
+              <button class="btn btn-primary btn-md" onclick="window.print()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                  <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                <span>Print Slip (A6 / Thermal)</span>
+              </button>
+
+              <a id="slip-track-btn" href="patient-tracker.html" class="btn btn-secondary btn-md">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Track this Token</span>
+              </a>
+
+              <a href="register-patient.html" class="btn btn-secondary btn-md">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>Register Another Patient</span>
+              </a>
+
+              <a href="token-slip.html" class="btn btn-ghost btn-md">
+                <span>View All Tokens</span>
+              </a>
+
+              <a href="reception-dashboard.html" class="btn btn-ghost btn-md">
+                <span>Back to Dashboard</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ================================================================
+             MODE 2: ALL TOKEN SLIPS LIST / DIRECTORY (when no ?token= is set)
+             ================================================================ -->
+        <div id="all-tokens-container" style="display: none;">
+          
+          <div class="slips-list-header">
+            <div>
+              <h2 style="font-size: 1.35rem; margin-bottom: 2px;">Today's Issued OPD Tokens</h2>
+              <p class="text-muted text-sm" style="margin-bottom: 0;">Comprehensive directory of all walk-in, scheduled, and emergency tokens.</p>
+            </div>
+
+            <a href="register-patient.html" class="btn btn-primary btn-sm">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span>Issue New Token</span>
+            </a>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="card mb-4">
+            <div class="card-body" style="padding: 16px 20px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                
+                <div style="flex: 1; min-width: 260px;">
+                  <div class="input-icon-wrapper">
+                    <span class="input-icon-left">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </span>
+                    <input type="text" id="token-search-input" class="form-control has-left-icon" placeholder="Search by token, patient name, doctor, or department...">
+                  </div>
+                </div>
+
+                <div class="filter-pills-group">
+                  <button type="button" class="filter-pill-btn active" data-cat="All">All Tokens</button>
+                  <button type="button" class="filter-pill-btn" data-cat="Emergency">Emergency</button>
+                  <button type="button" class="filter-pill-btn" data-cat="Scheduled">Scheduled</button>
+                  <button type="button" class="filter-pill-btn" data-cat="Walk-in">Walk-in</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Tokens Table -->
+          <div class="table-container">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Token Number</th>
+                  <th>Patient Name</th>
+                  <th>Category</th>
+                  <th>Severity</th>
+                  <th>Department & Doctor</th>
+                  <th>Room</th>
+                  <th>Reg. Time</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="tokens-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Shared App & API Scripts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/qr.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // Role Guard: Allow Receptionist (Front Desk) or Patient guest lookup
+    SmartOPD.requireAuth(['Receptionist', 'Patient'], true);
+    SmartOPD.initLayout('token-slips');
+
+    // Parse URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedToken = urlParams.get('token');
+
+    if (requestedToken) {
+      // MODE 1: Show Specific Token Slip
+      renderSingleToken(requestedToken);
+    } else {
+      // MODE 2: Show All Tokens Directory
+      renderAllTokensView();
+    }
+
+    // Render Single Slip via GET /api/patients/{token}
+    async function renderSingleToken(tokenNum) {
+      const singleContainer = document.getElementById('single-token-container');
+      const allContainer = document.getElementById('all-tokens-container');
+      singleContainer.style.display = 'block';
+      allContainer.style.display = 'none';
+      document.getElementById('slip-view-title').textContent = `OPD Slip – ${tokenNum}`;
+
+      const printableTicket = document.getElementById('printable-ticket');
+      if (printableTicket) printableTicket.style.opacity = '0.5';
+
+      try {
+        const res = await SmartOPDApi.get('/api/patients/' + encodeURIComponent(tokenNum));
+        const patient = SmartOPDAdapters.adaptPatientSlip(res);
+
+        if (printableTicket) printableTicket.style.opacity = '1';
+
+        // Populate Slip
+        document.getElementById('slip-token-num').textContent = patient.tokenNumber;
+        document.getElementById('slip-patient-name').textContent = patient.name;
+        document.getElementById('slip-patient-age-gender').textContent = `${patient.age} yrs / ${patient.gender}`;
+        document.getElementById('slip-patient-phone').textContent = `+91 ${patient.phone}`;
+        document.getElementById('slip-doctor-name').textContent = patient.doctorName;
+        document.getElementById('slip-doctor-room').textContent = patient.room;
+        document.getElementById('slip-department').textContent = patient.department;
+
+        // Category badge
+        const catBadge = document.getElementById('slip-category-badge');
+        catBadge.textContent = patient.category;
+        if (patient.category === 'Emergency') catBadge.className = 'badge badge-emergency';
+        else if (patient.category === 'Scheduled') catBadge.className = 'badge badge-scheduled';
+        else catBadge.className = 'badge badge-walkin';
+
+        // Severity pill
+        const sevPill = document.getElementById('slip-severity-pill');
+        sevPill.textContent = `Sev ${patient.severity}`;
+        sevPill.className = `sev-pill sev-pill-${patient.severity}`;
+
+        // Queue Position & Est Start Time
+        const posBox = document.getElementById('slip-pos-box');
+        if (patient.severity === 5 || patient.category === 'Emergency') {
+          posBox.className = 'ticket-queue-pos-box emergency-override';
+          document.getElementById('slip-queue-position').innerHTML = '<span style="color:var(--sev-5-emergency);">Position #1 (Emergency Override)</span>';
+          document.getElementById('slip-start-time').textContent = 'Immediate Call';
+        } else {
+          posBox.className = 'ticket-queue-pos-box';
+          document.getElementById('slip-queue-position').textContent = `Position #${patient.position}`;
+          document.getElementById('slip-start-time').textContent = patient.estimatedStartTime || 'Calculating...';
+        }
+
+        // Explainability text
+        document.getElementById('slip-explanation-text').textContent = patient.explanation || 'Standard OPD clinical queue scheduling.';
+
+        // Timestamp
+        const regDate = new Date(patient.registrationTime);
+        document.getElementById('slip-timestamp').textContent = regDate.toLocaleTimeString('en-US', {
+          hour: '2-digit', minute: '2-digit', hour12: true
+        }) + ' • Today';
+
+        // Generate Real Dynamic QR Code pointing to patient-tracker.html?token=XXXX using location.origin
+        const trackerUrl = `${window.location.origin}/patient-tracker.html?token=${encodeURIComponent(patient.tokenNumber)}`;
+        if (window.SmartOPDQR) {
+          SmartOPDQR.render('slip-qr-box', trackerUrl, 64);
+        }
+        const trackLink = document.getElementById('slip-track-link');
+        if (trackLink) trackLink.href = trackerUrl;
+        const trackBtn = document.getElementById('slip-track-btn');
+        if (trackBtn) trackBtn.href = trackerUrl;
+
+      } catch (err) {
+        singleContainer.innerHTML = `
+          <div class="card text-center" style="max-width: 500px; margin: 40px auto; padding: 40px;">
+            <h3 style="color: var(--sev-5-emergency);">Token Error</h3>
+            <p class="text-muted">${err.message || ('No patient record found matching token ' + tokenNum)}</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
+              <button class="btn btn-secondary btn-sm" id="btn-retry-slip">Retry</button>
+              <a href="token-slip.html" class="btn btn-ghost btn-sm">View All Tokens</a>
+              <a href="register-patient.html" class="btn btn-primary btn-sm">Register New Patient</a>
+            </div>
+          </div>
+        `;
+        const retryBtn = document.getElementById('btn-retry-slip');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', () => {
+            window.location.reload();
+          });
+        }
+        SmartOPD.showToast('Token Error', err.message || 'Cannot load token', 'error');
+      }
+    }
+
+    // Render All Tokens Table via GET /api/patients?search=
+    function renderAllTokensView() {
+      document.getElementById('single-token-container').style.display = 'none';
+      document.getElementById('all-tokens-container').style.display = 'block';
+
+      let currentCatFilter = 'All';
+      let searchTimeout = null;
+      const searchInput = document.getElementById('token-search-input');
+      const filterPills = document.querySelectorAll('.filter-pill-btn');
+      const tableBody = document.getElementById('tokens-table-body');
+
+      async function fetchAndRenderTokens() {
+        const query = searchInput ? searchInput.value.trim() : '';
+        tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding: 32px;">Loading tokens...</td></tr>`;
+
+        try {
+          const endpoint = query ? `/api/patients?search=${encodeURIComponent(query)}` : '/api/patients';
+          const res = await SmartOPDApi.get(endpoint);
+          let tokens = SmartOPDAdapters.adaptAllPatients(res);
+
+          if (currentCatFilter !== 'All') {
+            tokens = tokens.filter(p => p.category === currentCatFilter);
+          }
+
+          if (tokens.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding: 32px;">No tokens found matching your search.</td></tr>`;
+            return;
+          }
+
+          tableBody.innerHTML = tokens.map(p => {
+            let catBadge = `<span class="badge badge-walkin">Walk-in</span>`;
+            if (p.category === 'Emergency') catBadge = `<span class="badge badge-emergency">Emergency</span>`;
+            else if (p.category === 'Scheduled') catBadge = `<span class="badge badge-scheduled">Scheduled</span>`;
+
+            const sevPill = `<span class="sev-pill sev-pill-${p.severity}">Sev ${p.severity}</span>`;
+
+            let statusBadge = `<span class="badge badge-waiting">Waiting</span>`;
+            if (p.status === 'In Consultation') statusBadge = `<span class="badge badge-consulting">In Room</span>`;
+            else if (p.status === 'Completed') statusBadge = `<span class="badge badge-completed">Completed</span>`;
+            else if (p.status === 'No-Show') statusBadge = `<span class="badge" style="background:#F1F5F9; color:#64748B;">No-Show</span>`;
+
+            const time = new Date(p.registrationTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+            return `
+              <tr>
+                <td class="font-bold text-teal">${p.tokenNumber}</td>
+                <td class="font-semibold">${p.name} <span class="text-xs text-muted">(${p.age}y, ${p.gender ? p.gender[0] : 'O'})</span></td>
+                <td>${catBadge}</td>
+                <td>${sevPill}</td>
+                <td>
+                  <div style="line-height: 1.2;">
+                    <span class="font-medium">${p.doctorName}</span><br>
+                    <span class="text-xs text-muted">${p.department}</span>
+                  </div>
+                </td>
+                <td><span class="badge badge-scheduled" style="font-size:0.7rem;">${p.room}</span></td>
+                <td class="text-xs text-muted">${time}</td>
+                <td>${statusBadge}</td>
+                <td>
+                  <a href="token-slip.html?token=${encodeURIComponent(p.tokenNumber)}" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem;">
+                    View Slip
+                  </a>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        } catch (err) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="9" class="text-center" style="padding: 32px; color: var(--sev-5-emergency);">
+                Failed to load tokens: ${err.message || 'Cannot reach server'}.
+                <br><br>
+                <button class="btn btn-secondary btn-sm" id="btn-retry-tokens-load">Retry</button>
+              </td>
+            </tr>
+          `;
+          const btn = document.getElementById('btn-retry-tokens-load');
+          if (btn) btn.addEventListener('click', fetchAndRenderTokens);
+          SmartOPD.showToast('Load Error', err.message || 'Cannot load tokens list', 'error');
+        }
+      }
+
+      // Search Listener with 300ms debounce
+      searchInput.addEventListener('input', () => {
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(fetchAndRenderTokens, 300);
+      });
+
+      // Filter Pill Listeners
+      filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          filterPills.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          currentCatFilter = pill.getAttribute('data-cat');
+          fetchAndRenderTokens();
+        });
+      });
+
+      // Initial populate
+      fetchAndRenderTokens();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Settings & Triage Policy – SmartOPD</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <style>
+    /* Settings Page Styles */
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: var(--space-6);
+      align-items: start;
+    }
+
+    .settings-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-xs);
+      margin-bottom: var(--space-6);
+    }
+    .settings-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: var(--space-5);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .settings-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--primary-teal-subtle);
+      color: var(--primary-teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .settings-card-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      margin: 0;
+    }
+
+    /* Slider + Number Input control group */
+    .setting-item {
+      margin-bottom: var(--space-5);
+    }
+    .setting-item:last-child {
+      margin-bottom: 0;
+    }
+    .setting-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .setting-label {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--navy-dark);
+    }
+    .setting-desc {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .slider-input-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+    .setting-range {
+      flex: 1;
+      height: 6px;
+      accent-color: var(--primary-teal);
+      cursor: pointer;
+    }
+    .setting-number {
+      width: 90px;
+      text-align: right;
+      font-weight: 700;
+      font-size: 0.9375rem;
+      color: var(--navy-dark);
+    }
+
+    /* Sticky Live Preview Card */
+    .sticky-preview {
+      position: sticky;
+      top: 88px;
+    }
+    .preview-card {
+      background: #FFFFFF;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--primary-teal);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-md);
+    }
+    .preview-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-teal-subtle);
+      color: var(--primary-teal);
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .patient-preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .patient-preview-item {
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .patient-preview-item.rank-1 {
+      border-left: 4px solid var(--sev-5-emergency);
+      background: #FFFDFD;
+    }
+    .patient-preview-item.rank-2 {
+      border-left: 4px solid var(--primary-teal);
+    }
+    .patient-preview-item.rank-3 {
+      border-left: 4px solid var(--sky-accent);
+    }
+    .preview-rank-tag {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--navy-dark);
+      padding: 2px 6px;
+      background: #E2E8F0;
+      border-radius: 4px;
+    }
+    .preview-score-val {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--primary-teal);
+    }
+
+    /* Bottom Action Bar */
+    .actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: #FFFFFF;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      margin-top: var(--space-4);
+      box-shadow: var(--shadow-sm);
+    }
+    .unsaved-warning {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--sev-3-medium);
+      font-weight: 600;
+    }
+    .unsaved-warning.active {
+      display: flex;
+    }
+
+    @media (max-width: 992px) {
+      .settings-layout {
+        grid-template-columns: 1fr;
+      }
+      .sticky-preview {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Mobile Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Sidebar (Dark Navy #0B2545) -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="reception-dashboard.html" class="sidebar-brand">
+          <div class="brand-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+            <span class="brand-subtext">Front Desk</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">FRONT DESK</div>
+        <ul class="nav-list" id="sidebar-nav-links">
+          <!-- Populated by app.js -->
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-logout-btn" id="logout-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <!-- Top Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="topbar-heading">
+            <h1 class="page-title">System Settings & Triage Policy</h1>
+            <span class="page-subtitle">Configure priority score multipliers, anti-starvation thresholds & buffer limits</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="live-clock-card" title="Current Hospital Time">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="live-clock">--:--:--</span>
+          </div>
+
+          <div class="user-profile-chip" id="user-chip">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="app-content">
+
+        <div class="settings-layout">
+          <!-- Left Column: Settings Configuration Groups -->
+          <div>
+            <!-- Group 1: Scoring Weights -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <div class="settings-card-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="settings-card-title">Scoring Multipliers & Weights</h3>
+                  <span class="text-xs text-muted">Core mathematical coefficients balancing clinical urgency vs wait time</span>
+                </div>
+              </div>
+
+              <!-- SEVERITY_WEIGHT -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <label class="setting-label" for="input-sev-weight">Severity Multiplier (SEVERITY_WEIGHT)</label>
+                  <span class="text-xs font-semibold text-teal" id="badge-sev-weight">20 pts / level</span>
+                </div>
+                <div class="setting-desc">
+                  Points awarded per triage severity level (1–5). Higher values give clinical emergencies higher precedence over waiting patients.
+                </div>
+                <div class="slider-input-row">
+                  <input type="range" class="setting-range" id="range-sev-weight" min="5" max="50" step="1" value="20" oninput="syncSetting('sev-weight', this.value)">
+                  <input type="number" class="form-control setting-number" id="input-sev-weight" min="5" max="50" step="1" value="20" oninput="syncSetting('sev-weight', this.value)">
+                </div>
+              </div>
+
+              <!-- WAIT_WEIGHT_PER_MIN -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <label class="setting-label" for="input-wait-weight">Wait Time Accumulator (WAIT_WEIGHT_PER_MIN)</label>
+                  <span class="text-xs font-semibold text-teal" id="badge-wait-weight">3.0 pts / min</span>
+                </div>
+                <div class="setting-desc">
+                  Priority points added for every minute elapsed since patient arrival. Higher values increase FIFO discipline.
+                </div>
+                <div class="slider-input-row">
+                  <input type="range" class="setting-range" id="range-wait-weight" min="0.1" max="10.0" step="0.1" value="3.0" oninput="syncSetting('wait-weight', this.value)">
+                  <input type="number" class="form-control setting-number" id="input-wait-weight" min="0.1" max="10.0" step="0.1" value="3.0" oninput="syncSetting('wait-weight', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 2: Fairness & Anti-Starvation -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <div class="settings-card-icon" style="background: var(--fairness-bg); color: var(--fairness-violet);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 14 14"></polyline>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="settings-card-title">Fairness & Starvation Prevention</h3>
+                  <span class="text-xs text-muted">Aging thresholds that protect routine patients from being stranded</span>
+                </div>
+              </div>
+
+              <!-- FAIRNESS_BOOST -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <label class="setting-label" for="input-fairness-boost">Fairness Boost Points (FAIRNESS_BOOST)</label>
+                  <span class="text-xs font-semibold" style="color: var(--fairness-violet);" id="badge-fairness-boost">+150 pts</span>
+                </div>
+                <div class="setting-desc">
+                  Bonus points injected into a patient's score once their wait duration exceeds their category's SLA threshold.
+                </div>
+                <div class="slider-input-row">
+                  <input type="range" class="setting-range" id="range-fairness-boost" min="10" max="250" step="5" value="150" oninput="syncSetting('fairness-boost', this.value)">
+                  <input type="number" class="form-control setting-number" id="input-fairness-boost" min="10" max="250" step="5" value="150" oninput="syncSetting('fairness-boost', this.value)">
+                </div>
+              </div>
+
+              <!-- FAIRNESS_THRESHOLD_SCHEDULED -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <label class="setting-label" for="input-thresh-sched">Scheduled Appointment SLA (FAIRNESS_THRESHOLD_SCHEDULED)</label>
+                  <span class="text-xs font-semibold text-teal" id="badge-thresh-sched">45 mins</span>
+                </div>
+                <div class="setting-desc">
+                  Maximum acceptable delay after an appointment time before a scheduled patient qualifies for fairness boost.
+                </div>
+                <div class="slider-input-row">
+                  <input type="range" class="setting-range" id="range-thresh-sched" min="10" max="120" step="5" value="45" oninput="syncSetting('thresh-sched', this.value)">
+                  <input type="number" class="form-control setting-number" id="input-thresh-sched" min="10" max="120" step="5" value="45" oninput="syncSetting('thresh-sched', this.value)">
+                </div>
+              </div>
+
+              <!-- FAIRNESS_THRESHOLD_WALKIN -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <label class="setting-label" for="input-thresh-walkin">Walk-in Patient SLA (FAIRNESS_THRESHOLD_WALKIN)</label>
+                  <span class="text-xs font-semibold text-teal" id="badge-thresh-walkin">45 mins</span>
+                </div>
+                <div class="setting-desc">
+                  Elapsed wait duration before a walk-in patient earns anti-starvation aging boost points.
+                </div>
+                <div class="slider-input-row">
+                  <input type="range" class="setting-range" id="range-thresh-walkin" min="15" max="180" step="5" value="45" oninput="syncSetting('thresh-walkin', this.value)">
+                  <input type="number" class="form-control setting-number" id="input-thresh-walkin" min="15" max="180" step="5" value="45" oninput="syncSetting('thresh-walkin', this.value)">
+                </div>
+              </div>
+
+              <!-- MAX_CONSECUTIVE_EMERGENCIES -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <label class="setting-label" for="input-max-emerg">Emergency Interruption Cap (MAX_CONSECUTIVE_EMERGENCIES)</label>
+                  <span class="text-xs font-semibold" style="color: var(--sev-5-emergency);" id="badge-max-emerg">2 calls</span>
+                </div>
+                <div class="setting-desc">
+                  Caps consecutive emergency call-ins so waiting scheduled patients are not permanently starved during mass casualties.
+                </div>
+                <div class="slider-input-row">
+                  <input type="range" class="setting-range" id="range-max-emerg" min="1" max="5" step="1" value="2" oninput="syncSetting('max-emerg', this.value)">
+                  <input type="number" class="form-control setting-number" id="input-max-emerg" min="1" max="5" step="1" value="2" oninput="syncSetting('max-emerg', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 3: Default Buffers -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <div class="settings-card-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="settings-card-title">Doctor Capacity & Buffers</h3>
+                  <span class="text-xs text-muted">Default reservation slots for unscheduled trauma and walk-in arrivals</span>
+                </div>
+              </div>
+
+              <!-- EMERGENCY_BUFFER_SLOTS_DEFAULT -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <label class="setting-label" for="input-buffer-slots">Default Buffer Slots (EMERGENCY_BUFFER_SLOTS_DEFAULT)</label>
+                  <span class="text-xs font-semibold text-teal" id="badge-buffer-slots">2 slots</span>
+                </div>
+                <div class="setting-desc">
+                  Default number of unbooked consultation slots reserved in each doctor's OPD shift to absorb sudden walk-in emergencies.
+                </div>
+                <div class="slider-input-row">
+                  <input type="range" class="setting-range" id="range-buffer-slots" min="0" max="10" step="1" value="2" oninput="syncSetting('buffer-slots', this.value)">
+                  <input type="number" class="form-control setting-number" id="input-buffer-slots" min="0" max="10" step="1" value="2" oninput="syncSetting('buffer-slots', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Actions Bar -->
+            <div class="actions-bar">
+              <div class="unsaved-warning" id="unsaved-warning">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>You have unsaved changes</span>
+              </div>
+
+              <div style="display: flex; gap: 12px; margin-left: auto;">
+                <button type="button" class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Live Preview Card -->
+          <div class="sticky-preview">
+            <div class="preview-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <span class="preview-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 14 14"></polyline>
+                  </svg>
+                  Interactive Live Preview
+                </span>
+                <span class="text-xs text-muted" id="preview-data-source">Auto-reorders</span>
+              </div>
+
+              <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--navy-dark); margin-bottom: 6px;">
+                Real-Time Queue Impact
+              </h4>
+              <p class="text-xs text-muted" style="margin-bottom: 12px;">
+                Watch how adjustments to weights and fairness thresholds immediately re-rank patients in real time.
+              </p>
+
+              <div class="patient-preview-list" id="preview-list">
+                <!-- Dynamically populated and re-ordered -->
+              </div>
+
+              <div style="margin-top: 16px; padding: 12px; background: #F8FAFC; border-radius: var(--radius-sm); border: 1px solid var(--border-light); font-size: 0.75rem; color: var(--navy-muted);">
+                <div style="font-weight: 700; color: var(--navy-dark); margin-bottom: 4px;">Scoring Formula:</div>
+                <code>Score = (Severity × W_sev) + (Wait_min × W_wait) + FairnessBoost</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Shared App & API Scripts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // 1. Role Guard & App Shell Layout
+    SmartOPD.requireAuth(['Receptionist']);
+    SmartOPD.initLayout('settings');
+
+    // Dynamic Live Queue Patients & Anonymous Archetype Fallback
+    let previewPatients = [];
+
+    const DEFAULT_ARCHETYPES = [
+      {
+        id: 'ARCH_1',
+        name: 'Patient (Urgent Walk-in)',
+        category: 'Walk-in',
+        severity: 4,
+        waitingMinutes: 10,
+        desc: 'Triage Severity Level 4'
+      },
+      {
+        id: 'ARCH_2',
+        name: 'Patient (Scheduled Appointment)',
+        category: 'Scheduled',
+        severity: 2,
+        waitingMinutes: 35,
+        desc: 'Scheduled Follow-up'
+      },
+      {
+        id: 'ARCH_3',
+        name: 'Patient (Routine Walk-in)',
+        category: 'Walk-in',
+        severity: 3,
+        waitingMinutes: 50,
+        desc: 'Routine Consultation'
+      }
+    ];
+
+    let hasUnsavedChanges = false;
+    let isActionInFlight = false;
+
+    // Load live patients from active queues for preview
+    async function loadPreviewPatients() {
+      try {
+        const raw = await SmartOPDApi.get('/api/queues');
+        const doctorsWithQueues = SmartOPDAdapters.adaptQueues(raw);
+        const liveWaiting = [];
+        doctorsWithQueues.forEach(doc => {
+          if (Array.isArray(doc.queue)) {
+            doc.queue.forEach(p => {
+              liveWaiting.push({
+                id: p.id || p.token,
+                name: p.name ? `${p.name} (${p.token})` : `Token ${p.token}`,
+                category: p.category || 'Walk-in',
+                severity: p.severity || 1,
+                waitingMinutes: typeof p.estimatedWaitMinutes === 'number' ? p.estimatedWaitMinutes : 0,
+                desc: (p.chiefComplaint ? `${p.chiefComplaint} • ` : '') + (doc.name ? `Dr. ${doc.name.replace('Dr. ', '')}` : 'General OPD')
+              });
+            });
+          }
+        });
+
+        const badgeEl = document.getElementById('preview-data-source');
+        if (liveWaiting.length > 0) {
+          previewPatients = liveWaiting.slice(0, 5);
+          if (badgeEl) badgeEl.textContent = 'Live Queue Data';
+        } else {
+          previewPatients = DEFAULT_ARCHETYPES;
+          if (badgeEl) badgeEl.textContent = 'Triage Archetypes';
+        }
+      } catch (err) {
+        console.warn('Could not load live queues for preview:', err);
+        previewPatients = DEFAULT_ARCHETYPES;
+        const badgeEl = document.getElementById('preview-data-source');
+        if (badgeEl) badgeEl.textContent = 'Triage Archetypes';
+      }
+      updateLivePreview();
+    }
+
+    // Load initial settings into UI controls
+    async function loadSettingsIntoUI() {
+      try {
+        const raw = await SmartOPDApi.get('/api/settings');
+        const s = SmartOPDAdapters.adaptSettings(raw);
+        if (!s) return;
+
+        setFieldValue('sev-weight', s.severityWeight);
+        setFieldValue('wait-weight', s.waitWeightPerMin);
+        setFieldValue('fairness-boost', s.fairnessBoost);
+        setFieldValue('thresh-sched', s.fairnessThresholdScheduled);
+        setFieldValue('thresh-walkin', s.fairnessThresholdWalkin);
+        setFieldValue('max-emerg', s.maxConsecutiveEmergencies);
+        setFieldValue('buffer-slots', s.emergencyBufferSlotsDefault);
+
+        updateBadges();
+        updateLivePreview();
+        hasUnsavedChanges = false;
+        document.getElementById('unsaved-warning').classList.remove('active');
+      } catch (err) {
+        console.error('Failed to load settings from server:', err);
+        SmartOPD.showToast('Load Error', err.message || 'Cannot fetch settings', 'error');
+      }
+    }
+
+    function setFieldValue(key, val) {
+      const rangeEl = document.getElementById(`range-${key}`);
+      const inputEl = document.getElementById(`input-${key}`);
+      if (rangeEl) rangeEl.value = val;
+      if (inputEl) inputEl.value = val;
+    }
+
+    function getFormSettings() {
+      return {
+        severityWeight: parseFloat(document.getElementById('input-sev-weight').value),
+        waitWeightPerMin: parseFloat(document.getElementById('input-wait-weight').value),
+        fairnessBoost: parseFloat(document.getElementById('input-fairness-boost').value),
+        fairnessThresholdScheduled: parseInt(document.getElementById('input-thresh-sched').value, 10),
+        fairnessThresholdWalkin: parseInt(document.getElementById('input-thresh-walkin').value, 10),
+        maxConsecutiveEmergencies: parseInt(document.getElementById('input-max-emerg').value, 10),
+        emergencyBufferSlotsDefault: parseInt(document.getElementById('input-buffer-slots').value, 10)
+      };
+    }
+
+    // Synchronize slider and number input
+    function syncSetting(key, val) {
+      const rangeEl = document.getElementById(`range-${key}`);
+      const inputEl = document.getElementById(`input-${key}`);
+      if (rangeEl) rangeEl.value = val;
+      if (inputEl) inputEl.value = val;
+
+      hasUnsavedChanges = true;
+      document.getElementById('unsaved-warning').classList.add('active');
+
+      updateBadges();
+      updateLivePreview();
+    }
+
+    function updateBadges() {
+      const s = getFormSettings();
+      document.getElementById('badge-sev-weight').textContent = `${s.severityWeight} pts / lvl`;
+      document.getElementById('badge-wait-weight').textContent = `${s.waitWeightPerMin} pts / min`;
+      document.getElementById('badge-fairness-boost').textContent = `+${s.fairnessBoost} pts`;
+      document.getElementById('badge-thresh-sched').textContent = `${s.fairnessThresholdScheduled} mins`;
+      document.getElementById('badge-thresh-walkin').textContent = `${s.fairnessThresholdWalkin} mins`;
+      document.getElementById('badge-max-emerg').textContent = `${s.maxConsecutiveEmergencies} calls`;
+      document.getElementById('badge-buffer-slots').textContent = `${s.emergencyBufferSlotsDefault} slots`;
+    }
+
+    // Compute preview scores and update the live re-ordered list
+    function updateLivePreview() {
+      const s = getFormSettings();
+
+      const scored = previewPatients.map(p => {
+        const sevPart = p.severity * s.severityWeight;
+        const waitPart = Math.round(p.waitingMinutes * s.waitWeightPerMin);
+        
+        let hasBoost = false;
+        if (p.category === 'Scheduled' && p.waitingMinutes >= s.fairnessThresholdScheduled) {
+          hasBoost = true;
+        } else if (p.category === 'Walk-in' && p.waitingMinutes >= s.fairnessThresholdWalkin) {
+          hasBoost = true;
+        }
+
+        const boostPart = hasBoost ? s.fairnessBoost : 0;
+        const totalScore = sevPart + waitPart + boostPart;
+
+        return {
+          ...p,
+          sevPart,
+          waitPart,
+          boostPart,
+          hasBoost,
+          totalScore
+        };
+      });
+
+      // Sort descending by totalScore (ties broken by wait time)
+      scored.sort((a, b) => b.totalScore - a.totalScore || b.waitingMinutes - a.waitingMinutes);
+
+      const listEl = document.getElementById('preview-list');
+      if (!listEl) return;
+
+      listEl.innerHTML = scored.map((item, idx) => {
+        const rank = idx + 1;
+        const sevBadge = `<span class="sev-pill sev-pill-${item.severity}">Sev ${item.severity}</span>`;
+        const boostBadge = item.hasBoost
+          ? `<span class="badge badge-fairness">+${s.fairnessBoost} Boost</span>`
+          : '';
+
+        return `
+          <div class="patient-preview-item rank-${rank}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="preview-rank-tag">#${rank}</span>
+                <span style="font-weight:700; color:var(--navy-dark); font-size:0.9375rem;">${item.name}</span>
+              </div>
+              <span class="preview-score-val">${item.totalScore} pts</span>
+            </div>
+
+            <div class="text-xs text-muted">${item.desc}</div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span class="badge badge-${item.category.toLowerCase()}">${item.category}</span>
+                ${sevBadge}
+                ${boostBadge}
+              </div>
+              <span class="text-xs text-muted">Waited: ${item.waitingMinutes}m</span>
+            </div>
+
+            <div style="font-size:0.75rem; color:var(--navy-muted); margin-top:2px;">
+              Breakdown: (${item.sevPart} sev + ${item.waitPart} wait${item.boostPart ? ` + ${item.boostPart} boost` : ''})
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Save Settings
+    async function saveSettings() {
+      if (isActionInFlight) return;
+      isActionInFlight = true;
+
+      const newSettings = getFormSettings();
+      try {
+        await SmartOPDApi.put('/api/settings', newSettings);
+        hasUnsavedChanges = false;
+        document.getElementById('unsaved-warning').classList.remove('active');
+        SmartOPD.showToast('Settings Saved', 'OPD scoring policy and starvation thresholds updated.', 'success');
+      } catch (err) {
+        SmartOPD.showToast('Validation Failed', err.message || 'Failed to save settings', 'error');
+      } finally {
+        isActionInFlight = false;
+      }
+    }
+
+    // Reset to Defaults
+    async function resetToDefaults() {
+      if (!confirm('Reset all scoring weights and fairness thresholds to default hospital standards?')) return;
+      if (isActionInFlight) return;
+      isActionInFlight = true;
+
+      try {
+        await SmartOPDApi.post('/api/settings/reset', {});
+        await loadSettingsIntoUI();
+        SmartOPD.showToast('Defaults Restored', 'Scoring policy reset to original defaults.', 'info');
+      } catch (err) {
+        SmartOPD.showToast('Reset Error', err.message || 'Failed to reset settings', 'error');
+      } finally {
+        isActionInFlight = false;
+      }
+    }
+
+    // Warn before navigating away if there are unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // Initial load
+    loadSettingsIntoUI();
+    loadPreviewPatients();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reception Desk – SmartOPD Queue Management</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+
+  <style>
+    /* ==========================================================================
+       Reception Dashboard Specific Styles
+       ========================================================================== */
+    .dashboard-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .action-button-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* KPI Stat Cards Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-icon-patients { background: rgba(15, 118, 110, 0.12); color: var(--primary-teal); }
+    .stat-icon-waiting  { background: rgba(245, 158, 11, 0.15); color: #B45309; }
+    .stat-icon-emergency { background: rgba(220, 38, 38, 0.15); color: var(--sev-5-emergency); }
+    .stat-icon-waittime { background: rgba(56, 189, 248, 0.18); color: #0284C7; }
+
+    .stat-card.stat-emergency-active {
+      border-color: var(--sev-5-border);
+      background: linear-gradient(180deg, #FFFFFF 0%, #FEF2F2 100%);
+    }
+
+    .stat-card-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-number {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--navy-dark);
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Section Headings */
+    .section-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    /* Doctors Card Grid */
+    .doctors-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .doctor-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .doctor-card:hover {
+      border-color: var(--primary-teal);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    .doctor-card.off-duty {
+      opacity: 0.72;
+      background: #FAFAFA;
+    }
+
+    .doctor-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .doctor-name-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .doctor-card-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      margin-bottom: 2px;
+    }
+
+    .doctor-specialty {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--primary-teal);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .doctor-room-pill {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      background: var(--bg-page);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-light);
+      width: fit-content;
+      margin-top: 4px;
+    }
+
+    /* Doctor Card Live OPD Metrics */
+    .doctor-metrics-box {
+      background-color: var(--bg-page);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .metric-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+    }
+
+    .metric-row .metric-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .metric-row .metric-value {
+      color: var(--navy-dark);
+      font-weight: 700;
+    }
+
+    .doctor-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+      font-size: 0.75rem;
+    }
+
+    .click-view-hint {
+      color: var(--primary-teal);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Modal / Side Drawer Styles */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(11, 37, 69, 0.65);
+      backdrop-filter: blur(3px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity var(--transition-normal);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: 16px;
+      max-width: 720px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FFFFFF;
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-page);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .doctors-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .insights-charts-grid { grid-template-columns: 1fr !important; }
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .doctors-grid { grid-template-columns: 1fr; }
+      .dashboard-header-actions { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Mobile Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Sidebar (Dark Navy #0B2545) -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="reception-dashboard.html" class="sidebar-brand">
+          <div class="brand-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+            <span class="brand-subtext">Reception Desk</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">RECEPTION MENU</div>
+        <ul class="nav-list" id="sidebar-nav-links">
+          <!-- Populated by app.js -->
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-logout-btn" id="logout-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <!-- Top Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="topbar-heading">
+            <h1 class="page-title">Receptionist OPD Dashboard</h1>
+            <span class="page-subtitle">Real-time Triage, Live Room Queues & Token Management</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="live-clock-card" title="Current Hospital Time">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="live-clock">--:--:--</span>
+          </div>
+
+          <div class="user-profile-chip" id="user-chip">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Dashboard Content -->
+      <main class="app-content">
+        
+        <!-- Header Actions Bar -->
+        <div class="dashboard-header-actions">
+          <div>
+            <h2 style="font-size: 1.35rem; margin-bottom: 2px;">Today's OPD Queue Status</h2>
+            <p class="text-muted text-sm" style="margin-bottom: 0;">Live triage overview across all OPD consultation suites.</p>
+          </div>
+
+          <div class="action-button-group">
+            <!-- Emergency Quick Add Button -->
+            <button class="btn btn-danger btn-md" id="btn-emergency-quick">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Emergency Quick Add</span>
+            </button>
+
+            <!-- Register Patient Button -->
+            <a href="register-patient.html" class="btn btn-primary btn-md">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span>Register Patient</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 4 KPI Stat Cards -->
+        <div class="stats-grid">
+          <!-- Card 1: Patients Today -->
+          <div class="stat-card">
+            <div class="stat-icon-box stat-icon-patients">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="stat-card-details">
+              <span class="stat-number" id="stat-patients-today">--</span>
+              <span class="stat-label">Patients Today</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Currently Waiting -->
+          <div class="stat-card">
+            <div class="stat-icon-box stat-icon-waiting">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="stat-card-details">
+              <span class="stat-number" id="stat-currently-waiting">--</span>
+              <span class="stat-label">Currently Waiting</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Active Emergencies -->
+          <div class="stat-card" id="card-active-emergencies">
+            <div class="stat-icon-box stat-icon-emergency">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <div class="stat-card-details">
+              <span class="stat-number" id="stat-active-emergencies">--</span>
+              <span class="stat-label">Active Emergencies</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Average Wait Time -->
+          <div class="stat-card">
+            <div class="stat-icon-box stat-icon-waittime">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            </div>
+            <div class="stat-card-details">
+              <span class="stat-number" id="stat-avg-wait">--</span>
+              <span class="stat-label">Avg Wait Time</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Active Doctors OPD Grid -->
+        <div class="section-title-bar">
+          <h3 class="section-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+            <span>OPD Consultation Suites</span>
+          </h3>
+          <span class="text-xs text-muted">Click any doctor card to inspect live queue & explainability</span>
+        </div>
+
+        <!-- Doctor Cards Container -->
+        <div class="doctors-grid" id="doctors-grid-container">
+          <!-- Rendered dynamically by script -->
+        </div>
+
+        <!-- Section: OPD Analytics & Operational Insights -->
+        <div class="section-title-bar" style="margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border-light);">
+          <div>
+            <h3 class="section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              <span>OPD Queue Insights & Telemetry</span>
+            </h3>
+            <span class="text-xs text-muted">Real-time throughput, fairness aging, and department triage analytics</span>
+          </div>
+          <!-- Quick Links -->
+          <div class="action-button-group">
+            <a href="manage-doctors.html" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              <span>Doctors</span>
+            </a>
+            <a href="settings.html" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span>Settings</span>
+            </a>
+            <a href="analytics.html" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              <span>Analytics</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Counters for Fairness Boosts Today and No-Shows -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="stat-card" style="padding: 16px; border-left: 4px solid var(--fairness-violet);">
+            <div class="stat-icon-box" style="background: rgba(124, 58, 237, 0.12); color: var(--fairness-violet);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+            </div>
+            <div class="stat-card-details">
+              <span class="stat-number" id="dash-fairness-boosts">0</span>
+              <span class="stat-label">Fairness Boosts Today</span>
+            </div>
+          </div>
+
+          <div class="stat-card" style="padding: 16px; border-left: 4px solid #DC2626;">
+            <div class="stat-icon-box" style="background: rgba(220, 38, 38, 0.12); color: #DC2626;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            </div>
+            <div class="stat-card-details">
+              <span class="stat-number" id="dash-noshows">0</span>
+              <span class="stat-label">No-Shows Today</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insights 4-Chart Grid -->
+        <div class="insights-charts-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px;">
+          <!-- Chart 1: Patients Per Hour (Line) -->
+          <div class="stat-card" style="display: block; padding: 20px;">
+            <div style="margin-bottom: 12px;">
+              <h4 style="font-size: 0.9375rem; font-weight: 700; color: var(--navy-dark); margin: 0;">Patients Registered per Hour</h4>
+              <span class="text-xs text-muted">Arrival pace distribution across hospital working hours</span>
+            </div>
+            <div id="dash-chart-hourly" style="min-height: 220px;"></div>
+          </div>
+
+          <!-- Chart 2: Category Split (Donut) -->
+          <div class="stat-card" style="display: block; padding: 20px;">
+            <div style="margin-bottom: 12px;">
+              <h4 style="font-size: 0.9375rem; font-weight: 700; color: var(--navy-dark); margin: 0;">Patient Intake by Category</h4>
+              <span class="text-xs text-muted">Emergency vs Scheduled appointments vs Walk-in visits</span>
+            </div>
+            <div id="dash-chart-categories" style="min-height: 220px;"></div>
+          </div>
+
+          <!-- Chart 3: Average Wait per Doctor (Bar) -->
+          <div class="stat-card" style="display: block; padding: 20px;">
+            <div style="margin-bottom: 12px;">
+              <h4 style="font-size: 0.9375rem; font-weight: 700; color: var(--navy-dark); margin: 0;">Average Wait per Doctor</h4>
+              <span class="text-xs text-muted">Mean lobby wait time across duty physicians</span>
+            </div>
+            <div id="dash-chart-doc-waits" style="min-height: 220px;"></div>
+          </div>
+
+          <!-- Chart 4: Severity Distribution (Bar in Severity Colors) -->
+          <div class="stat-card" style="display: block; padding: 20px;">
+            <div style="margin-bottom: 12px;">
+              <h4 style="font-size: 0.9375rem; font-weight: 700; color: var(--navy-dark); margin: 0;">Clinical Severity Distribution</h4>
+              <span class="text-xs text-muted">Level 1 (Non-urgent) through Level 5 (Resuscitation)</span>
+            </div>
+            <div id="dash-chart-severity" style="min-height: 220px;"></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Doctor Queue Top 5 Modal -->
+  <div class="modal-backdrop" id="queue-modal-backdrop">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-doctor-name">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-doctor-name" style="margin-bottom: 2px;">Doctor Queue Details</h3>
+          <span class="text-xs text-muted" id="modal-doctor-room">OPD Room --</span>
+        </div>
+        <button class="btn btn-ghost btn-icon" id="btn-close-modal" aria-label="Close dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-size: 0.9375rem; margin-bottom: 0;">Next Patients in Queue (Top 5 Priority)</h4>
+          <span class="badge badge-scheduled" id="modal-queue-count">0 waiting</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Token</th>
+                <th>Patient</th>
+                <th>Category</th>
+                <th>Severity</th>
+                <th>Est. Start</th>
+                <th>Explainability Rationale</th>
+              </tr>
+            </thead>
+            <tbody id="modal-queue-table-body">
+              <!-- Populated by script -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" id="btn-modal-close-footer">Close</button>
+        <a href="register-patient.html" class="btn btn-primary btn-sm">Register For This Doctor</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emergency Quick Add Modal -->
+  <div class="modal-backdrop" id="emergency-modal-backdrop">
+    <div class="modal-box" style="max-width: 520px;" role="dialog" aria-modal="true">
+      <div class="modal-header" style="border-bottom-color: var(--sev-5-border); background: var(--sev-5-bg);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 34px; height: 34px; border-radius: 50%; background: var(--sev-5-emergency); color: white; display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div>
+            <h3 style="color: var(--sev-5-emergency); margin-bottom: 0; font-size: 1.15rem;">Emergency Quick Admission</h3>
+            <span class="text-xs" style="color: #991B1B;">Priority Level 5 Override</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-icon" id="btn-close-emergency-modal" aria-label="Close">
+          &times;
+        </button>
+      </div>
+
+      <form id="emergency-quick-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="eq-name">Patient Full Name <span class="required">*</span></label>
+            <input type="text" id="eq-name" class="form-control" placeholder="e.g. Anand Sharma" required>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label" for="eq-age">Age <span class="required">*</span></label>
+              <input type="number" id="eq-age" class="form-control" placeholder="Years" min="1" max="120" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="eq-gender">Gender</label>
+              <select id="eq-gender" class="form-select">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="eq-phone">Contact Phone (10 digits) <span class="required">*</span></label>
+            <input type="tel" id="eq-phone" class="form-control" placeholder="10-digit number" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="eq-doctor">Assign Emergency Doctor <span class="required">*</span></label>
+            <select id="eq-doctor" class="form-select" required>
+              <!-- Filled with available doctors -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="eq-complaint">Clinical Emergency Observation</label>
+            <textarea id="eq-complaint" class="form-control" rows="2" placeholder="e.g. Acute chest pain, shortness of breath"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-emergency">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm">
+            <span>Issue Level 5 Emergency Token</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shared App & REST Client Scripts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // Role Guard: Require Receptionist (Front Desk)
+    SmartOPD.requireAuth(['Receptionist']);
+    SmartOPD.initLayout('dashboard');
+
+    let currentQueuesData = [];
+    let currentAnalyticsData = null;
+    let pollHandle = null;
+    let isRefreshing = false;
+    let initialLoadDone = false;
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Render Dashboard Content from REST API
+    async function refreshDashboard() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+
+      try {
+        const [rawQueues, rawAnalytics] = await Promise.all([
+          SmartOPDApi.get('/api/queues'),
+          SmartOPDApi.get('/api/analytics')
+        ]);
+
+        currentQueuesData = SmartOPDAdapters.adaptQueues(rawQueues);
+        currentAnalyticsData = SmartOPDAdapters.adaptAnalytics(rawAnalytics);
+
+        initialLoadDone = true;
+
+        // 1. Stats
+        const totalToday = currentAnalyticsData.totalPatients || 0;
+        const waitingCount = currentAnalyticsData.waitingCount || 0;
+        let activeEmergencies = 0;
+        currentQueuesData.forEach(d => { activeEmergencies += (d.emergencyCount || 0); });
+        const avgWait = currentAnalyticsData.averageWaitOverall || 0;
+
+        document.getElementById('stat-patients-today').textContent = totalToday;
+        document.getElementById('stat-currently-waiting').textContent = waitingCount;
+        document.getElementById('stat-active-emergencies').textContent = activeEmergencies;
+        document.getElementById('stat-avg-wait').textContent = `${avgWait}m`;
+
+        const emergencyCard = document.getElementById('card-active-emergencies');
+        if (activeEmergencies > 0) {
+          emergencyCard.classList.add('stat-emergency-active');
+        } else {
+          emergencyCard.classList.remove('stat-emergency-active');
+        }
+
+        // 2. Doctor Cards
+        renderDoctorCards(currentQueuesData);
+
+        // 3. Insights Section
+        renderDashboardInsights(currentAnalyticsData);
+
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+        if (!initialLoadDone) {
+          const docContainer = document.getElementById('doctors-grid-container');
+          if (docContainer) {
+            docContainer.innerHTML = `
+              <div class="card p-4 text-center" style="grid-column: 1 / -1;">
+                <h4 style="color: var(--sev-5-emergency); margin-bottom: 8px;">Unable to Connect to SmartOPD Server</h4>
+                <p class="text-muted text-sm mb-3">${escapeHtml(err.message || 'Server unreachable')}</p>
+                <button type="button" class="btn btn-primary btn-sm" onclick="refreshDashboard()">Retry Connection</button>
+              </div>
+            `;
+          }
+        }
+        if (window.SmartOPD && typeof SmartOPD.showToast === 'function') {
+          SmartOPD.showToast('Server Notice', err.message, 'warning');
+        }
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    function renderDoctorCards(doctors) {
+      const doctorsContainer = document.getElementById('doctors-grid-container');
+      if (!doctorsContainer) return;
+
+      if (!doctors || doctors.length === 0) {
+        doctorsContainer.innerHTML = '<div class="card p-4 text-center text-muted" style="grid-column: 1 / -1;">No doctors configured in OPD.</div>';
+        return;
+      }
+
+      doctorsContainer.innerHTML = doctors.map(doc => {
+        let statusBadge = `<span class="badge badge-completed">Available</span>`;
+        if (doc.status === 'On Break') statusBadge = `<span class="badge badge-waiting">On Break</span>`;
+        else if (doc.status === 'Off Duty') statusBadge = `<span class="badge" style="background:#E2E8F0; color:#64748B;">Off Duty</span>`;
+
+        const emergencyHighlight = doc.emergencyCount > 0
+          ? `<span class="badge badge-emergency" style="font-size: 0.7rem;">${doc.emergencyCount} Emergency</span>`
+          : '';
+
+        return `
+          <div class="doctor-card ${doc.status === 'Off Duty' ? 'off-duty' : ''}" onclick="openDoctorQueueModal('${escapeHtml(doc.id)}')">
+            <div>
+              <div class="doctor-card-header">
+                <div class="doctor-name-group">
+                  <h4 class="doctor-card-name">${escapeHtml(doc.name)}</h4>
+                  <span class="doctor-specialty">${escapeHtml(doc.department)}</span>
+                  <span class="doctor-room-pill">${escapeHtml(doc.room)}</span>
+                </div>
+                ${statusBadge}
+              </div>
+
+              <div class="doctor-metrics-box">
+                <div class="metric-row">
+                  <span class="metric-label">Now Serving:</span>
+                  <span class="metric-value text-teal font-semibold">
+                    ${doc.activeToken ? `${escapeHtml(doc.activeToken)} <span class="text-xs text-muted">(${escapeHtml(doc.activePatientName || '')})</span>` : 'None (Room Empty)'}
+                  </span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Queue Length:</span>
+                  <span class="metric-value">
+                    ${doc.waitingCount} waiting ${emergencyHighlight}
+                  </span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Next Available:</span>
+                  <span class="metric-value ${doc.status === 'Off Duty' ? 'text-muted' : 'text-navy'}">
+                    ${escapeHtml(doc.nextFreeTimeStr)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="doctor-card-footer">
+              <span class="text-muted text-xs">Avg. consult: ${doc.avgConsultMinutes} mins</span>
+              <span class="click-view-hint">
+                <span>View Queue (${doc.queue.length})</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Render Insights Row
+    function renderDashboardInsights(analytics) {
+      if (!analytics || typeof SmartOPDCharts === 'undefined') return;
+
+      const elBoosts = document.getElementById('dash-fairness-boosts');
+      if (elBoosts) elBoosts.textContent = analytics.fairnessBoostCount || 0;
+
+      const elNoShows = document.getElementById('dash-noshows');
+      if (elNoShows) elNoShows.textContent = analytics.noShowCount || 0;
+
+      // 1. Patients per Hour (Line Chart)
+      if (document.getElementById('dash-chart-hourly')) {
+        SmartOPDCharts.renderLineChart('dash-chart-hourly', {
+          title: 'Patients Registered per Hour',
+          data: (analytics.patientsPerHour || []).map(b => ({ x: b.label, y: b.count })),
+          xKey: 'x',
+          yKey: 'y',
+          height: 220,
+          strokeColor: SmartOPDCharts.COLORS.tealPrimary,
+          yLabel: 'Patients'
+        });
+      }
+
+      // 2. Category Split (Donut Chart)
+      if (document.getElementById('dash-chart-categories')) {
+        const catData = [
+          { label: 'Emergency', value: analytics.totalsByCategory?.Emergency || 0, color: SmartOPDCharts.COLORS.emergencyRed },
+          { label: 'Scheduled', value: analytics.totalsByCategory?.Scheduled || 0, color: SmartOPDCharts.COLORS.blueScheduled },
+          { label: 'Walk-in', value: analytics.totalsByCategory?.['Walk-in'] || 0, color: SmartOPDCharts.COLORS.tealPrimary }
+        ];
+        SmartOPDCharts.renderDonutChart('dash-chart-categories', {
+          title: 'Patient Intake by Category',
+          data: catData,
+          size: 190,
+          thickness: 30,
+          centerLabel: String(analytics.totalPatients || 0),
+          centerSub: 'Total'
+        });
+      }
+
+      // 3. Average Wait per Doctor (Bar Chart)
+      if (document.getElementById('dash-chart-doc-waits')) {
+        const docWaitData = (analytics.averageWaitPerDoctor || []).map(d => ({
+          label: (d.doctorName || '').replace('Dr. ', ''),
+          value: d.avgWaitMinutes,
+          color: SmartOPDCharts.COLORS.tealPrimary
+        }));
+        SmartOPDCharts.renderBarChart('dash-chart-doc-waits', {
+          title: 'Average Wait per Doctor',
+          data: docWaitData,
+          xKey: 'label',
+          yKey: 'value',
+          height: 220,
+          yLabel: 'Mins'
+        });
+      }
+
+      // 4. Severity Distribution (Bar in Severity Colors)
+      if (document.getElementById('dash-chart-severity')) {
+        const sevData = [
+          { label: 'Sev 1', value: analytics.severityDistribution?.[1] || 0, severity: 1 },
+          { label: 'Sev 2', value: analytics.severityDistribution?.[2] || 0, severity: 2 },
+          { label: 'Sev 3', value: analytics.severityDistribution?.[3] || 0, severity: 3 },
+          { label: 'Sev 4', value: analytics.severityDistribution?.[4] || 0, severity: 4 },
+          { label: 'Sev 5', value: analytics.severityDistribution?.[5] || 0, severity: 5 }
+        ];
+        SmartOPDCharts.renderBarChart('dash-chart-severity', {
+          title: 'Clinical Severity Triage Distribution',
+          data: sevData,
+          xKey: 'label',
+          yKey: 'value',
+          height: 220,
+          getColor: (d) => SmartOPDCharts.COLORS.sevColors[d.severity] || SmartOPDCharts.COLORS.tealPrimary,
+          yLabel: 'Patients'
+        });
+      }
+    }
+
+    // Modal Operations
+    function openDoctorQueueModal(doctorId) {
+      const doc = currentQueuesData.find(d => d.id === doctorId);
+      if (!doc) return;
+
+      document.getElementById('modal-doctor-name').textContent = `${doc.name} - ${doc.department}`;
+      document.getElementById('modal-doctor-room').textContent = `${doc.room}`;
+      document.getElementById('modal-queue-count').textContent = `${doc.waitingCount} in line`;
+
+      const tbody = document.getElementById('modal-queue-table-body');
+      if (doc.queue.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 24px;">No patients currently waiting in this room.</td></tr>`;
+      } else {
+        tbody.innerHTML = doc.queue.map(p => {
+          let catBadge = `<span class="badge badge-walkin">Walk-in</span>`;
+          if (p.category === 'Emergency') catBadge = `<span class="badge badge-emergency">Emergency</span>`;
+          else if (p.category === 'Scheduled') catBadge = `<span class="badge badge-scheduled">Scheduled</span>`;
+
+          const sevPill = `<span class="sev-pill sev-pill-${p.severity}">Sev ${p.severity}</span>`;
+
+          return `
+            <tr>
+              <td class="font-bold">#${p.position}</td>
+              <td class="font-semibold text-teal">${escapeHtml(p.tokenNumber)}</td>
+              <td>${escapeHtml(p.name)} <span class="text-xs text-muted">(${p.age}y, ${(p.gender || 'O')[0]})</span></td>
+              <td>${catBadge}</td>
+              <td>${sevPill}</td>
+              <td class="font-semibold">${escapeHtml(p.estimatedStartTime)}</td>
+              <td class="text-xs text-muted" style="max-width: 260px;">${escapeHtml(p.explanation)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('queue-modal-backdrop').classList.add('open');
+    }
+
+    function closeDoctorQueueModal() {
+      document.getElementById('queue-modal-backdrop').classList.remove('open');
+    }
+
+    // Bind Modal Close listeners
+    document.getElementById('btn-close-modal').addEventListener('click', closeDoctorQueueModal);
+    document.getElementById('btn-modal-close-footer').addEventListener('click', closeDoctorQueueModal);
+    document.getElementById('queue-modal-backdrop').addEventListener('click', (e) => {
+      if (e.target.id === 'queue-modal-backdrop') closeDoctorQueueModal();
+    });
+
+    // Emergency Quick Add Modal Handling
+    const emergencyModal = document.getElementById('emergency-modal-backdrop');
+    const btnEmergencyQuick = document.getElementById('btn-emergency-quick');
+    const btnCloseEmergency = document.getElementById('btn-close-emergency-modal');
+    const btnCancelEmergency = document.getElementById('btn-cancel-emergency');
+    const doctorSelect = document.getElementById('eq-doctor');
+
+    function openEmergencyModal() {
+      const activeDoctors = currentQueuesData.filter(d => d.status !== 'Off Duty');
+      doctorSelect.innerHTML = activeDoctors.map(d => `
+        <option value="${escapeHtml(d.id)}">${escapeHtml(d.name)} (${escapeHtml(d.department)} - ${escapeHtml(d.room)})</option>
+      `).join('');
+
+      emergencyModal.classList.add('open');
+      document.getElementById('eq-name').focus();
+    }
+
+    function closeEmergencyModal() {
+      emergencyModal.classList.remove('open');
+      document.getElementById('emergency-quick-form').reset();
+    }
+
+    btnEmergencyQuick.addEventListener('click', openEmergencyModal);
+    btnCloseEmergency.addEventListener('click', closeEmergencyModal);
+    btnCancelEmergency.addEventListener('click', closeEmergencyModal);
+    emergencyModal.addEventListener('click', (e) => {
+      if (e.target.id === 'emergency-modal-backdrop') closeEmergencyModal();
+    });
+
+    // Emergency Quick Form Submit via API
+    document.getElementById('emergency-quick-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const formData = {
+          name: document.getElementById('eq-name').value.trim(),
+          age: parseInt(document.getElementById('eq-age').value, 10),
+          gender: document.getElementById('eq-gender').value,
+          phone: document.getElementById('eq-phone').value.trim(),
+          category: 'Emergency',
+          severity: 5,
+          doctorId: document.getElementById('eq-doctor').value,
+          chiefComplaint: document.getElementById('eq-complaint').value.trim() || 'Immediate Emergency Admission'
+        };
+
+        const result = await SmartOPDApi.post('/api/patients', formData);
+        SmartOPD.showToast('Emergency Admitted', `Token ${result.tokenNumber} placed at Position #${result.position} in queue.`, 'error');
+        closeEmergencyModal();
+        await refreshDashboard();
+      } catch (err) {
+        SmartOPD.showToast('Admission Error', err.message, 'error');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+
+    // Initial Load & 5s Polling
+    refreshDashboard();
+    pollHandle = SmartOPDApi.poll(refreshDashboard, 5000, null, (err) => {
+      console.warn('Dashboard poll error:', err);
+    });
+  </script>
+</body>
+</html>

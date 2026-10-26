@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Doctors & Departments – SmartOPD</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <style>
+    /* Tabs Navigation */
+    .nav-tabs {
+      display: flex;
+      gap: var(--space-2);
+      border-bottom: 2px solid var(--border-light);
+      margin-bottom: var(--space-6);
+    }
+    .tab-btn {
+      padding: var(--space-3) var(--space-5);
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9375rem;
+      margin-bottom: -2px;
+      transition: all var(--transition-fast);
+    }
+    .tab-btn:hover {
+      color: var(--navy-dark);
+    }
+    .tab-btn.active {
+      color: var(--primary-teal);
+      border-bottom-color: var(--primary-teal);
+    }
+    .tab-badge {
+      background: #E2E8F0;
+      color: var(--navy-dark);
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+    .tab-btn.active .tab-badge {
+      background: var(--primary-teal-subtle);
+      color: var(--primary-teal);
+    }
+
+    /* Search & Filter Toolbar */
+    .filter-toolbar {
+      display: flex;
+      gap: var(--space-3);
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-5);
+      flex-wrap: wrap;
+    }
+    .filter-group {
+      display: flex;
+      gap: var(--space-3);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Modal Backdrop & Dialog (from standard design system) */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(11, 37, 69, 0.65);
+      backdrop-filter: blur(3px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity var(--transition-normal);
+    }
+    .modal-backdrop.open {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FFFFFF;
+    }
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      margin: 0;
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-page);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Departments Grid */
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-4);
+    }
+    .dept-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-xs);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dept-code-tag {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--primary-teal);
+      background: var(--primary-teal-subtle);
+      padding: 3px 8px;
+      border-radius: var(--radius-xs);
+      font-size: 0.8125rem;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Mobile Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Sidebar (Dark Navy #0B2545) -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="reception-dashboard.html" class="sidebar-brand">
+          <div class="brand-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+            <span class="brand-subtext">Front Desk</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">FRONT DESK</div>
+        <ul class="nav-list" id="sidebar-nav-links">
+          <!-- Populated by app.js -->
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-logout-btn" id="logout-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <!-- Top Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="topbar-heading">
+            <h1 class="page-title">Doctor & Department Management</h1>
+            <span class="page-subtitle">Configure medical staff rosters, consulting rooms, shifts and specialties</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="live-clock-card" title="Current Hospital Time">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="live-clock">--:--:--</span>
+          </div>
+
+          <div class="user-profile-chip" id="user-chip">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="app-content">
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+          <button class="tab-btn active" id="tab-btn-doctors" onclick="switchTab('doctors')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>Doctors Rosters</span>
+            <span class="tab-badge" id="tab-badge-doctors">0</span>
+          </button>
+          <button class="tab-btn" id="tab-btn-departments" onclick="switchTab('departments')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>OPD Departments</span>
+            <span class="tab-badge" id="tab-badge-departments">0</span>
+          </button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: DOCTORS VIEW                        -->
+        <!-- ========================================== -->
+        <div id="view-doctors">
+          <!-- Toolbar -->
+          <div class="filter-toolbar">
+            <div class="filter-group">
+              <div class="input-icon-wrapper" style="width: 260px;">
+                <span class="input-icon-left">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </span>
+                <input type="text" id="search-doctors" class="form-control has-left-icon" placeholder="Search doctor by name or ID..." oninput="renderDoctorsTable()">
+              </div>
+
+              <select id="filter-dept" class="form-control" style="width: 200px;" onchange="renderDoctorsTable()">
+                <option value="">All Departments</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="openAddDoctorModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add New Doctor</span>
+            </button>
+          </div>
+
+          <!-- Doctors Table -->
+          <div class="table-container">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Doctor ID</th>
+                  <th>Name & Title</th>
+                  <th>Login</th>
+                  <th>Department</th>
+                  <th>OPD Room</th>
+                  <th>Working Hours</th>
+                  <th>Avg Consult</th>
+                  <th>Emergency Buffer</th>
+                  <th>Status</th>
+                  <th>Queue Depth</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="doctors-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: DEPARTMENTS VIEW                    -->
+        <!-- ========================================== -->
+        <div id="view-departments" style="display: none;">
+          <div class="filter-toolbar">
+            <div>
+              <h2 style="font-size: 1.25rem; margin: 0; color: var(--navy-dark);">Active Hospital OPD Units</h2>
+              <span class="text-xs text-muted">Specialty clinics routing incoming patient registrations</span>
+            </div>
+            <button class="btn btn-primary" onclick="openAddDeptModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Department</span>
+            </button>
+          </div>
+
+          <div class="dept-grid" id="departments-grid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD / EDIT DOCTOR                                -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="doctor-modal-backdrop">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="doctor-modal-title">
+      <div class="modal-header">
+        <h3 class="modal-title" id="doctor-modal-title">Add New Doctor</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeDoctorModal()" aria-label="Close dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="doctor-form" onsubmit="saveDoctorForm(event)">
+        <div class="modal-body">
+          <input type="hidden" id="doc-form-mode" value="add">
+
+          <div class="form-group mb-4">
+            <label class="form-label" for="doc-id">Doctor ID <span class="text-danger">*</span></label>
+            <input type="text" id="doc-id" class="form-control" placeholder="e.g. DOC007" required>
+            <span class="text-xs text-muted">Unique alphanumeric identifier for this physician.</span>
+          </div>
+
+          <div class="form-grid-2 mb-4">
+            <div class="form-group">
+              <label class="form-label" for="doc-name">Full Name <span class="text-danger">*</span></label>
+              <input type="text" id="doc-name" class="form-control" placeholder="e.g. Dr. Rajesh Sharma" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="doc-dept">Department <span class="text-danger">*</span></label>
+              <select id="doc-dept" class="form-control" required>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mb-4">
+            <div class="form-group">
+              <label class="form-label" for="doc-room">OPD Room <span class="text-danger">*</span></label>
+              <input type="text" id="doc-room" class="form-control" placeholder="e.g. Room 104" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="doc-status">Status</label>
+              <select id="doc-status" class="form-control">
+                <option value="Available">Available</option>
+                <option value="On Break">On Break</option>
+                <option value="Off Duty">Off Duty</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mb-4">
+            <div class="form-group">
+              <label class="form-label" for="doc-start-time">Shift Start Time <span class="text-danger">*</span></label>
+              <input type="time" id="doc-start-time" class="form-control" value="09:00" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="doc-end-time">Shift End Time <span class="text-danger">*</span></label>
+              <input type="time" id="doc-end-time" class="form-control" value="17:00" required>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="doc-avg-consult">Avg Consult (mins) <span class="text-danger">*</span></label>
+              <input type="number" id="doc-avg-consult" class="form-control" min="3" max="60" value="12" required>
+              <span class="text-xs text-muted">Range: 3 to 60 minutes.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="doc-buffer-slots">Emergency Buffer Slots <span class="text-danger">*</span></label>
+              <input type="number" id="doc-buffer-slots" class="form-control" min="0" max="10" value="2" required>
+              <span class="text-xs text-muted">Reserved slots (0 to 10).</span>
+            </div>
+          </div>
+
+          <!-- Doctor Login Section -->
+          <div class="doctor-login-section" id="doctor-login-section" style="border-top: 1px solid var(--border-light); padding-top: var(--space-4); margin-top: var(--space-4);">
+            <div style="font-weight: 700; color: var(--navy-dark); font-size: 0.9375rem; margin-bottom: 8px;">Doctor Login</div>
+
+            <!-- Case A: No login account exists (available in Add mode or Edit mode without login) -->
+            <div id="login-create-block">
+              <div class="form-group mb-3">
+                <label class="form-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="doc-create-login-cb" onchange="toggleDoctorLoginFields()">
+                  <span style="font-weight: 600; color: var(--navy-dark);">Create a login for this doctor</span>
+                </label>
+                <span class="text-xs text-muted" style="display: block; margin-left: 24px;">Enables this physician to sign in to the Doctor Console.</span>
+              </div>
+
+              <div id="login-fields-container" style="display: none; padding-left: 24px;">
+                <div class="form-group mb-3">
+                  <label class="form-label" for="doc-login-username">Username <span class="text-danger">*</span></label>
+                  <input type="text" id="doc-login-username" class="form-control" placeholder="e.g. dr.sharma" autocomplete="off">
+                  <div id="doc-login-username-error" class="text-xs text-danger" style="display: none; margin-top: 4px;"></div>
+                  <span class="text-xs text-muted">3 to 30 characters: letters, digits, dots, or underscores.</span>
+                </div>
+
+                <div class="form-grid-2 mb-3">
+                  <div class="form-group">
+                    <label class="form-label" for="doc-login-password">Password <span class="text-danger">*</span></label>
+                    <div class="password-field-wrapper">
+                      <input type="password" id="doc-login-password" class="form-control" placeholder="••••••••" autocomplete="new-password">
+                      <button type="button" class="password-toggle-btn" onclick="toggleDoctorPasswordVisibility('doc-login-password', this)" title="Show/Hide Password">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      </button>
+                    </div>
+                    <div id="doc-login-password-error" class="text-xs text-danger" style="display: none; margin-top: 4px;"></div>
+                    <span class="text-xs text-muted">Min 8 chars, with a letter and a digit.</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="doc-login-confirm">Confirm Password <span class="text-danger">*</span></label>
+                    <div class="password-field-wrapper">
+                      <input type="password" id="doc-login-confirm" class="form-control" placeholder="••••••••" autocomplete="new-password">
+                      <button type="button" class="password-toggle-btn" onclick="toggleDoctorPasswordVisibility('doc-login-confirm', this)" title="Show/Hide Password">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      </button>
+                    </div>
+                    <div id="doc-login-confirm-error" class="text-xs text-danger" style="display: none; margin-top: 4px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Case B: Doctor already has an assigned login account (Edit mode) -->
+            <div id="login-existing-block" style="display: none;">
+              <div class="form-group mb-3">
+                <label class="form-label">Assigned Login Username</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="text" id="doc-existing-username" class="form-control" readonly style="background-color: var(--bg-page); font-weight: 600; color: var(--navy-dark);">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-show-reset-pw" onclick="toggleResetPasswordSubform()" style="white-space: nowrap;">Reset Password</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-remove-login" onclick="promptRemoveDoctorLogin()" style="white-space: nowrap; color: var(--sev-5-emergency);">Remove Login</button>
+                </div>
+              </div>
+
+              <!-- Reset Password Subform -->
+              <div id="login-reset-subform" style="display: none; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; margin-top: 10px;">
+                <div style="font-size: 0.8125rem; font-weight: 600; color: var(--navy-dark); margin-bottom: 8px;">Reset Account Password</div>
+                <div class="form-grid-2 mb-2">
+                  <div class="form-group">
+                    <label class="form-label" for="doc-reset-password">New Password <span class="text-danger">*</span></label>
+                    <div class="password-field-wrapper">
+                      <input type="password" id="doc-reset-password" class="form-control" placeholder="••••••••" autocomplete="new-password">
+                      <button type="button" class="password-toggle-btn" onclick="toggleDoctorPasswordVisibility('doc-reset-password', this)" title="Show/Hide Password">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      </button>
+                    </div>
+                    <div id="doc-reset-password-error" class="text-xs text-danger" style="display: none; margin-top: 4px;"></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="doc-reset-confirm">Confirm Password <span class="text-danger">*</span></label>
+                    <div class="password-field-wrapper">
+                      <input type="password" id="doc-reset-confirm" class="form-control" placeholder="••••••••" autocomplete="new-password">
+                      <button type="button" class="password-toggle-btn" onclick="toggleDoctorPasswordVisibility('doc-reset-confirm', this)" title="Show/Hide Password">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      </button>
+                    </div>
+                    <div id="doc-reset-confirm-error" class="text-xs text-danger" style="display: none; margin-top: 4px;"></div>
+                  </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="toggleResetPasswordSubform(false)">Cancel</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="executeResetDoctorPassword()">Apply New Password</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeDoctorModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-doctor">Save Doctor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD DEPARTMENT                                   -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="dept-modal-backdrop">
+    <div class="modal-box" style="max-width: 480px;" role="dialog" aria-modal="true" aria-labelledby="dept-modal-title">
+      <div class="modal-header">
+        <h3 class="modal-title" id="dept-modal-title">Add OPD Department</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeDeptModal()" aria-label="Close dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="dept-form" onsubmit="saveDeptForm(event)">
+        <div class="modal-body">
+          <div class="form-group mb-4">
+            <label class="form-label" for="dept-code">Department Code <span class="text-danger">*</span></label>
+            <input type="text" id="dept-code" class="form-control" placeholder="e.g. DERM" style="text-transform: uppercase;" required>
+            <span class="text-xs text-muted">Short 2 to 6 character unique code.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="dept-name">Department Name <span class="text-danger">*</span></label>
+            <input type="text" id="dept-name" class="form-control" placeholder="e.g. Dermatology" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeDeptModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Department</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: DELETE CONFIRMATION                               -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="delete-modal-backdrop">
+    <div class="modal-box" style="max-width: 460px;" role="dialog" aria-modal="true">
+      <div class="modal-header" style="border-bottom-color: var(--sev-5-border); background: var(--sev-5-bg);">
+        <h3 class="modal-title" style="color: var(--sev-5-emergency);">Confirm Doctor Deletion</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeDeleteModal()" aria-label="Close dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="delete-confirm-text">Are you sure you want to remove this physician from the OPD roster?</p>
+        <p class="text-xs text-muted">Notice: Doctors with waiting patients cannot be deleted until their queue is transferred or cleared.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" style="background-color: var(--sev-5-emergency); border-color: var(--sev-5-emergency);" id="btn-confirm-delete" onclick="executeDeleteDoctor()">Delete Doctor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: REMOVE LOGIN CONFIRMATION                        -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="remove-login-modal-backdrop">
+    <div class="modal-box" style="max-width: 460px;" role="dialog" aria-modal="true">
+      <div class="modal-header" style="border-bottom-color: var(--sev-5-border); background: var(--sev-5-bg);">
+        <h3 class="modal-title" style="color: var(--sev-5-emergency);">Confirm Remove Login</h3>
+        <button class="btn btn-ghost btn-icon" onclick="closeRemoveLoginModal()" aria-label="Close dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="remove-login-confirm-text">Are you sure you want to remove the login account for this doctor?</p>
+        <p class="text-xs text-muted">Notice: The doctor will no longer be able to sign in to the Doctor Console until a new login is created.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeRemoveLoginModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" style="background-color: var(--sev-5-emergency); border-color: var(--sev-5-emergency);" id="btn-confirm-remove-login" onclick="executeRemoveDoctorLogin()">Remove Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared App & API Scripts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // 1. Role Guard & App Shell Layout
+    SmartOPD.requireAuth(['Receptionist']);
+    SmartOPD.initLayout('doctors');
+
+    let currentDeletingDoctorId = null;
+    let currentEditDoctorStaffUsername = null;
+    let cachedDoctors = [];
+    let cachedDepartments = [];
+    let cachedQueues = [];
+    let cachedStaffAccounts = [];
+    let isActionInFlight = false;
+
+    async function loadManageDoctorsData() {
+      try {
+        const [docs, depts, queues, staff] = await Promise.all([
+          SmartOPDApi.get('/api/doctors'),
+          SmartOPDApi.get('/api/departments'),
+          SmartOPDApi.get('/api/queues').catch(() => []),
+          SmartOPDApi.get('/api/staff').catch(() => [])
+        ]);
+        cachedDoctors = docs || [];
+        cachedDepartments = depts || [];
+        cachedQueues = SmartOPDAdapters.adaptQueues(queues) || [];
+        cachedStaffAccounts = staff || [];
+        renderDepartments();
+        renderDoctorsTable();
+      } catch (err) {
+        console.error('Failed to load doctor roster data:', err);
+        SmartOPD.showToast('Load Error', err.message || 'Cannot fetch doctors data', 'error');
+      }
+    }
+
+    // 2. Tab Navigation
+    function switchTab(tab) {
+      const isDocs = tab === 'doctors';
+      document.getElementById('view-doctors').style.display = isDocs ? 'block' : 'none';
+      document.getElementById('view-departments').style.display = isDocs ? 'none' : 'block';
+      
+      document.getElementById('tab-btn-doctors').classList.toggle('active', isDocs);
+      document.getElementById('tab-btn-departments').classList.toggle('active', !isDocs);
+    }
+
+    // 3. Render Doctors Table
+    function renderDoctorsTable() {
+      const doctors = cachedDoctors;
+      const departments = cachedDepartments;
+      const search = (document.getElementById('search-doctors').value || '').trim().toLowerCase();
+      const deptFilter = document.getElementById('filter-dept').value;
+
+      // Update counters
+      document.getElementById('tab-badge-doctors').textContent = doctors.length;
+      document.getElementById('tab-badge-departments').textContent = departments.length;
+
+      // Filter doctors
+      const filtered = doctors.filter(doc => {
+        const matchesSearch = !search || 
+          doc.name.toLowerCase().includes(search) || 
+          doc.id.toLowerCase().includes(search) ||
+          (doc.department || '').toLowerCase().includes(search);
+        const matchesDept = !deptFilter || doc.department === deptFilter;
+        return matchesSearch && matchesDept;
+      });
+
+      const tbody = document.getElementById('doctors-table-body');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="11" style="text-align: center; padding: 36px; color: var(--navy-muted);">
+              No doctors found matching current filters.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(doc => {
+        const statusBadge = doc.status === 'Available'
+          ? '<span class="badge badge-completed">Available</span>'
+          : doc.status === 'On Break'
+          ? '<span class="badge badge-waiting">On Break</span>'
+          : '<span class="badge" style="background:#F1F5F9; color:#64748B;">Off Duty</span>';
+
+        const docQueue = cachedQueues.find(q => q.id === doc.id);
+        const queueCount = docQueue ? (docQueue.queue ? docQueue.queue.length : (docQueue.waitingCount || 0)) : 0;
+        const queueBadge = queueCount > 0
+          ? `<span class="badge badge-scheduled">${queueCount} waiting</span>`
+          : `<span class="badge" style="background:#F8FAFC; color:#64748B;">Empty</span>`;
+
+        let hoursStr = '09:00 - 17:00';
+        if (typeof doc.workingHours === 'string') {
+          hoursStr = doc.workingHours;
+        } else if (doc.workingHours && doc.workingHours.start) {
+          hoursStr = `${doc.workingHours.start} - ${doc.workingHours.end}`;
+        }
+
+        const docStaff = (cachedStaffAccounts || []).find(s => s.doctorId === doc.id);
+        const loginCell = docStaff
+          ? `<td><code style="font-weight: 600; color: var(--primary-teal);">@${SmartOPD.escapeHtml(docStaff.username)}</code></td>`
+          : `<td><span class="text-xs text-muted">No login</span></td>`;
+
+        return `
+          <tr>
+            <td><code style="font-weight: 700; color: var(--navy-dark);">${SmartOPD.escapeHtml(doc.id)}</code></td>
+            <td style="font-weight: 600; color: var(--navy-dark);">${SmartOPD.escapeHtml(doc.name)}</td>
+            ${loginCell}
+            <td><span class="text-sm">${SmartOPD.escapeHtml(doc.department)}</span></td>
+            <td>${SmartOPD.escapeHtml(doc.room || '--')}</td>
+            <td><span class="text-xs font-medium">${SmartOPD.escapeHtml(hoursStr)}</span></td>
+            <td>${doc.avgConsultMinutes} min</td>
+            <td>${doc.emergencyBufferSlots || 0}</td>
+            <td>${statusBadge}</td>
+            <td>${queueBadge}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-ghost btn-sm" onclick="openEditDoctorModal('${SmartOPD.escapeHtml(doc.id)}')" title="Edit Doctor" style="padding: 4px 8px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Edit</span>
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="promptDeleteDoctor('${SmartOPD.escapeHtml(doc.id)}', '${SmartOPD.escapeHtml(doc.name)}')" title="Delete Doctor" style="padding: 4px 8px; color: var(--sev-5-emergency);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Delete</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 4. Render Departments View
+    function renderDepartments() {
+      const depts = cachedDepartments;
+      const doctors = cachedDoctors;
+      const grid = document.getElementById('departments-grid');
+
+      // Populate filter dropdown in doctors tab
+      const filterSelect = document.getElementById('filter-dept');
+      const formSelect = document.getElementById('doc-dept');
+      const currentFilter = filterSelect.value;
+
+      filterSelect.innerHTML = '<option value="">All Departments</option>' + 
+        depts.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+      filterSelect.value = currentFilter;
+
+      formSelect.innerHTML = depts.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+
+      // Populate grid
+      grid.innerHTML = depts.map(dept => {
+        const count = doctors.filter(doc => doc.department === dept.name || doc.deptCode === dept.code).length;
+        return `
+          <div class="dept-card">
+            <div>
+              <div style="font-weight: 700; color: var(--navy-dark); font-size: 1.05rem;">${dept.name}</div>
+              <div class="text-xs text-muted" style="margin-top: 4px;">
+                ${count} physician${count === 1 ? '' : 's'} assigned
+              </div>
+            </div>
+            <div class="dept-code-tag">${dept.code}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 5. Add / Edit Doctor Modal & Doctor Login Helpers
+    function toggleDoctorLoginFields() {
+      const cb = document.getElementById('doc-create-login-cb');
+      const container = document.getElementById('login-fields-container');
+      container.style.display = cb && cb.checked ? 'block' : 'none';
+      if (cb && cb.checked) {
+        document.getElementById('doc-login-username')?.focus();
+      }
+    }
+
+    function toggleDoctorPasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const isPw = input.type === 'password';
+      input.type = isPw ? 'text' : 'password';
+      if (btn) {
+        btn.innerHTML = isPw
+          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
+          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+      }
+    }
+
+    function toggleResetPasswordSubform(show) {
+      const subform = document.getElementById('login-reset-subform');
+      if (!subform) return;
+      const isVisible = show !== undefined ? show : subform.style.display !== 'none';
+      subform.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        document.getElementById('doc-reset-password').value = '';
+        document.getElementById('doc-reset-confirm').value = '';
+        document.getElementById('doc-reset-password-error').style.display = 'none';
+        document.getElementById('doc-reset-confirm-error').style.display = 'none';
+        document.getElementById('doc-reset-password').focus();
+      }
+    }
+
+    function promptRemoveDoctorLogin() {
+      if (!currentEditDoctorStaffUsername) return;
+      document.getElementById('remove-login-confirm-text').textContent =
+        `Are you sure you want to remove the login account for @${currentEditDoctorStaffUsername}? The physician will no longer be able to sign in to the Doctor Console.`;
+      document.getElementById('remove-login-modal-backdrop').classList.add('open');
+    }
+
+    function closeRemoveLoginModal() {
+      document.getElementById('remove-login-modal-backdrop').classList.remove('open');
+    }
+
+    async function executeRemoveDoctorLogin() {
+      if (!currentEditDoctorStaffUsername || isActionInFlight) return;
+      isActionInFlight = true;
+
+      try {
+        await SmartOPDApi.del(`/api/staff/${encodeURIComponent(currentEditDoctorStaffUsername)}`);
+        SmartOPD.showToast('Login Removed', `Staff account @${currentEditDoctorStaffUsername} deleted successfully.`, 'success');
+        closeRemoveLoginModal();
+
+        // Refresh data and update current edit modal to show "create login" block
+        const targetDocId = document.getElementById('doc-id').value.trim();
+        await loadManageDoctorsData();
+        openEditDoctorModal(targetDocId);
+      } catch (err) {
+        SmartOPD.showToast('Error', err.message || 'Cannot remove login account.', 'error');
+        closeRemoveLoginModal();
+      } finally {
+        isActionInFlight = false;
+      }
+    }
+
+    async function executeResetDoctorPassword() {
+      if (!currentEditDoctorStaffUsername || isActionInFlight) return;
+      const newPw = document.getElementById('doc-reset-password').value;
+      const confirmPw = document.getElementById('doc-reset-confirm').value;
+
+      const pwErr = document.getElementById('doc-reset-password-error');
+      const confErr = document.getElementById('doc-reset-confirm-error');
+      pwErr.style.display = 'none';
+      confErr.style.display = 'none';
+
+      if (!newPw || newPw.length < 8 || !/[a-zA-Z]/.test(newPw) || !/[0-9]/.test(newPw)) {
+        pwErr.textContent = 'Password must be at least 8 characters long and contain both a letter and a digit.';
+        pwErr.style.display = 'block';
+        return;
+      }
+
+      if (newPw !== confirmPw) {
+        confErr.textContent = 'Passwords do not match.';
+        confErr.style.display = 'block';
+        return;
+      }
+
+      isActionInFlight = true;
+      try {
+        await SmartOPDApi.put(`/api/staff/${encodeURIComponent(currentEditDoctorStaffUsername)}/password`, {
+          newPassword: newPw
+        });
+        SmartOPD.showToast('Password Updated', `Password for @${currentEditDoctorStaffUsername} updated successfully.`, 'success');
+        toggleResetPasswordSubform(false);
+      } catch (err) {
+        SmartOPD.showToast('Reset Failed', err.message || 'Cannot update password.', 'error');
+      } finally {
+        isActionInFlight = false;
+      }
+    }
+
+    function openAddDoctorModal() {
+      document.getElementById('doc-form-mode').value = 'add';
+      document.getElementById('doctor-modal-title').textContent = 'Add New Doctor';
+      document.getElementById('doc-id').value = '';
+      document.getElementById('doc-id').disabled = false;
+      document.getElementById('doc-name').value = '';
+      document.getElementById('doc-room').value = '';
+      document.getElementById('doc-start-time').value = '09:00';
+      document.getElementById('doc-end-time').value = '17:00';
+      document.getElementById('doc-avg-consult').value = 12;
+      document.getElementById('doc-buffer-slots').value = 2;
+      document.getElementById('doc-status').value = 'Available';
+
+      // Login section state for Add mode
+      currentEditDoctorStaffUsername = null;
+      document.getElementById('login-create-block').style.display = 'block';
+      document.getElementById('login-existing-block').style.display = 'none';
+      document.getElementById('doc-create-login-cb').checked = false;
+      document.getElementById('login-fields-container').style.display = 'none';
+      document.getElementById('doc-login-username').value = '';
+      document.getElementById('doc-login-password').value = '';
+      document.getElementById('doc-login-confirm').value = '';
+      document.getElementById('doc-login-username-error').style.display = 'none';
+      document.getElementById('doc-login-password-error').style.display = 'none';
+      document.getElementById('doc-login-confirm-error').style.display = 'none';
+
+      document.getElementById('doctor-modal-backdrop').classList.add('open');
+    }
+
+    function openEditDoctorModal(doctorId) {
+      const doc = cachedDoctors.find(d => d.id === doctorId);
+      if (!doc) return;
+
+      document.getElementById('doc-form-mode').value = 'edit';
+      document.getElementById('doctor-modal-title').textContent = `Edit Doctor – ${doc.name}`;
+      document.getElementById('doc-id').value = doc.id;
+      document.getElementById('doc-id').disabled = true; // ID cannot be changed
+      document.getElementById('doc-name').value = doc.name;
+      document.getElementById('doc-dept').value = doc.department;
+      document.getElementById('doc-room').value = doc.room || '';
+
+      let startTime = '09:00';
+      let endTime = '17:00';
+      if (typeof doc.workingHours === 'string' && doc.workingHours.includes('-')) {
+        const parts = doc.workingHours.split('-');
+        startTime = parts[0].trim();
+        endTime = parts[1].trim();
+      } else if (doc.workingHours && doc.workingHours.start) {
+        startTime = doc.workingHours.start;
+        endTime = doc.workingHours.end;
+      }
+      document.getElementById('doc-start-time').value = startTime;
+      document.getElementById('doc-end-time').value = endTime;
+      document.getElementById('doc-avg-consult').value = doc.avgConsultMinutes;
+      document.getElementById('doc-buffer-slots').value = doc.emergencyBufferSlots || 0;
+      document.getElementById('doc-status').value = doc.status || 'Available';
+
+      // Login section state for Edit mode
+      const docStaff = (cachedStaffAccounts || []).find(s => s.doctorId === doctorId);
+      if (docStaff) {
+        currentEditDoctorStaffUsername = docStaff.username;
+        document.getElementById('login-create-block').style.display = 'none';
+        document.getElementById('login-existing-block').style.display = 'block';
+        document.getElementById('doc-existing-username').value = '@' + docStaff.username;
+        toggleResetPasswordSubform(false);
+      } else {
+        currentEditDoctorStaffUsername = null;
+        document.getElementById('login-create-block').style.display = 'block';
+        document.getElementById('login-existing-block').style.display = 'none';
+        document.getElementById('doc-create-login-cb').checked = false;
+        document.getElementById('login-fields-container').style.display = 'none';
+        document.getElementById('doc-login-username').value = '';
+        document.getElementById('doc-login-password').value = '';
+        document.getElementById('doc-login-confirm').value = '';
+        document.getElementById('doc-login-username-error').style.display = 'none';
+        document.getElementById('doc-login-password-error').style.display = 'none';
+        document.getElementById('doc-login-confirm-error').style.display = 'none';
+      }
+
+      document.getElementById('doctor-modal-backdrop').classList.add('open');
+    }
+
+    function closeDoctorModal() {
+      document.getElementById('doctor-modal-backdrop').classList.remove('open');
+    }
+
+    async function saveDoctorForm(event) {
+      event.preventDefault();
+      if (isActionInFlight) return;
+
+      const mode = document.getElementById('doc-form-mode').value;
+      const id = document.getElementById('doc-id').value.trim();
+      const name = document.getElementById('doc-name').value.trim();
+      const department = document.getElementById('doc-dept').value;
+      const room = document.getElementById('doc-room').value.trim();
+      const start = document.getElementById('doc-start-time').value;
+      const end = document.getElementById('doc-end-time').value;
+      const avgConsultMinutes = parseInt(document.getElementById('doc-avg-consult').value, 10);
+      const emergencyBufferSlots = parseInt(document.getElementById('doc-buffer-slots').value, 10);
+      const status = document.getElementById('doc-status').value;
+
+      // Doctor Login inputs & validation
+      const createLoginCb = document.getElementById('doc-create-login-cb');
+      const wantsLogin = createLoginCb && createLoginCb.checked && document.getElementById('login-create-block').style.display !== 'none';
+
+      let loginUsername = '';
+      let loginPassword = '';
+      let loginConfirm = '';
+
+      if (wantsLogin) {
+        loginUsername = document.getElementById('doc-login-username').value.trim();
+        loginPassword = document.getElementById('doc-login-password').value;
+        loginConfirm = document.getElementById('doc-login-confirm').value;
+
+        const uErr = document.getElementById('doc-login-username-error');
+        const pErr = document.getElementById('doc-login-password-error');
+        const cErr = document.getElementById('doc-login-confirm-error');
+        uErr.style.display = 'none';
+        pErr.style.display = 'none';
+        cErr.style.display = 'none';
+
+        let hasError = false;
+        if (!loginUsername || !/^[a-zA-Z0-9._]{3,30}$/.test(loginUsername)) {
+          uErr.textContent = 'Username must be 3 to 30 characters containing only letters, digits, dots, or underscores.';
+          uErr.style.display = 'block';
+          hasError = true;
+        }
+
+        if (!loginPassword || loginPassword.length < 8 || !/[a-zA-Z]/.test(loginPassword) || !/[0-9]/.test(loginPassword)) {
+          pErr.textContent = 'Password must be at least 8 characters long and contain both a letter and a digit.';
+          pErr.style.display = 'block';
+          hasError = true;
+        }
+
+        if (loginPassword !== loginConfirm) {
+          cErr.textContent = 'Passwords do not match.';
+          cErr.style.display = 'block';
+          hasError = true;
+        }
+
+        if (hasError) return;
+      }
+
+      isActionInFlight = true;
+      const matchedDept = cachedDepartments.find(d => d.name === department);
+      const deptCode = matchedDept ? matchedDept.code : department.substring(0, 4).toUpperCase();
+      const existingDoc = cachedDoctors.find(d => d.id === id);
+
+      const doctorPayload = {
+        name,
+        age: existingDoc ? existingDoc.age : 45,
+        gender: existingDoc ? existingDoc.gender : 'Other',
+        phone: existingDoc ? existingDoc.phone : '9876543210',
+        department,
+        deptCode,
+        room,
+        workingHours: `${start} - ${end}`,
+        avgConsultMinutes,
+        emergencyBufferSlots,
+        status
+      };
+
+      try {
+        let doctorIdSaved = id;
+        if (mode === 'add') {
+          if (id) doctorPayload.id = id;
+          const savedDoc = await SmartOPDApi.post('/api/doctors', doctorPayload);
+          doctorIdSaved = (savedDoc && savedDoc.id) ? savedDoc.id : id;
+
+          // If login requested, call POST /api/staff
+          if (wantsLogin) {
+            try {
+              await SmartOPDApi.post('/api/staff', {
+                username: loginUsername,
+                displayName: name,
+                password: loginPassword,
+                role: 'DOCTOR',
+                doctorId: doctorIdSaved
+              });
+              SmartOPD.showToast('Doctor Added', `Dr. ${name} and login @${loginUsername} created successfully.`, 'success');
+              closeDoctorModal();
+              await loadManageDoctorsData();
+            } catch (staffErr) {
+              // Second call failed: Keep doctor, show error message, and open Edit modal to retry
+              await loadManageDoctorsData();
+              closeDoctorModal();
+              SmartOPD.showToast('Login Creation Failed', `Doctor saved, but the login could not be created: ${staffErr.message || 'Server error'}`, 'error', 6000);
+              openEditDoctorModal(doctorIdSaved);
+              return;
+            }
+          } else {
+            SmartOPD.showToast('Doctor Added', `Dr. ${name} has been enrolled in ${department}.`, 'success');
+            closeDoctorModal();
+            await loadManageDoctorsData();
+          }
+        } else {
+          // Edit mode
+          await SmartOPDApi.put(`/api/doctors/${encodeURIComponent(id)}`, doctorPayload);
+
+          if (wantsLogin) {
+            try {
+              await SmartOPDApi.post('/api/staff', {
+                username: loginUsername,
+                displayName: name,
+                password: loginPassword,
+                role: 'DOCTOR',
+                doctorId: id
+              });
+              SmartOPD.showToast('Doctor Updated', `Doctor updated and login account @${loginUsername} created.`, 'success');
+            } catch (staffErr) {
+              SmartOPD.showToast('Login Creation Failed', `Doctor saved, but the login could not be created: ${staffErr.message || 'Server error'}`, 'error', 6000);
+              await loadManageDoctorsData();
+              openEditDoctorModal(id);
+              return;
+            }
+          } else {
+            SmartOPD.showToast('Doctor Updated', `Roster details for ${name} updated successfully.`, 'success');
+          }
+          closeDoctorModal();
+          await loadManageDoctorsData();
+        }
+      } catch (err) {
+        SmartOPD.showToast('Validation Error', err.message || 'Failed to save doctor', 'error');
+      } finally {
+        isActionInFlight = false;
+      }
+    }
+
+    // 6. Delete Doctor Modal Logic
+    function promptDeleteDoctor(doctorId, doctorName) {
+      currentDeletingDoctorId = doctorId;
+      document.getElementById('delete-confirm-text').textContent = 
+        `Are you sure you want to delete ${doctorName} (${doctorId})?`;
+      document.getElementById('delete-modal-backdrop').classList.add('open');
+    }
+
+    function closeDeleteModal() {
+      currentDeletingDoctorId = null;
+      document.getElementById('delete-modal-backdrop').classList.remove('open');
+    }
+
+    async function executeDeleteDoctor() {
+      if (!currentDeletingDoctorId) return;
+      if (isActionInFlight) return;
+      isActionInFlight = true;
+
+      try {
+        await SmartOPDApi.del(`/api/doctors/${encodeURIComponent(currentDeletingDoctorId)}`);
+        SmartOPD.showToast('Doctor Deleted', `Doctor ${currentDeletingDoctorId} removed from rosters.`, 'success');
+        closeDeleteModal();
+        await loadManageDoctorsData();
+      } catch (err) {
+        // Displays readable error if blocked by waiting patients
+        SmartOPD.showToast('Action Blocked', err.message || 'Cannot delete doctor', 'error');
+        closeDeleteModal();
+      } finally {
+        isActionInFlight = false;
+      }
+    }
+
+    // 7. Add Department Modal Logic
+    function openAddDeptModal() {
+      document.getElementById('dept-code').value = '';
+      document.getElementById('dept-name').value = '';
+      document.getElementById('dept-modal-backdrop').classList.add('open');
+    }
+
+    function closeDeptModal() {
+      document.getElementById('dept-modal-backdrop').classList.remove('open');
+    }
+
+    async function saveDeptForm(event) {
+      event.preventDefault();
+      if (isActionInFlight) return;
+      isActionInFlight = true;
+
+      const code = document.getElementById('dept-code').value.trim().toUpperCase();
+      const name = document.getElementById('dept-name').value.trim();
+
+      try {
+        await SmartOPDApi.post('/api/departments', { code, name });
+        SmartOPD.showToast('Department Added', `${name} (${code}) created successfully.`, 'success');
+        closeDeptModal();
+        await loadManageDoctorsData();
+      } catch (err) {
+        SmartOPD.showToast('Validation Error', err.message || 'Failed to add department', 'error');
+      } finally {
+        isActionInFlight = false;
+      }
+    }
+
+    // Initial load
+    loadManageDoctorsData();
+  </script>
+</body>
+</html>

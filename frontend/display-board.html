@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPD Waiting Room Display Board – SmartOPD</title>
+
+  <!-- Google Fonts for High-Legibility TV Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       Waiting-Room Display Board - 16:9 TV Display Styles
+       High-contrast dark navy (#06182E to #0B2545), readable from 10+ metres
+       ========================================================================== */
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 10%, #0B2545 0%, #06182E 100%);
+      color: #FFFFFF;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* Fixed 16:9 No-Scroll Container for 1080p TVs */
+    @media (min-width: 1200px) and (min-height: 700px) {
+      body {
+        height: 100vh;
+        overflow: hidden;
+      }
+    }
+
+    /* ==========================================================================
+       Header Bar
+       ========================================================================== */
+    .board-header {
+      height: 76px;
+      padding: 0 32px;
+      background: rgba(6, 24, 46, 0.85);
+      border-bottom: 2px solid rgba(20, 184, 166, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hospital-logo-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(20, 184, 166, 0.35);
+    }
+
+    .hospital-name-text {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #FFFFFF;
+      line-height: 1.1;
+    }
+
+    .hospital-name-text span {
+      color: #2DD4BF;
+    }
+
+    .hospital-subtext {
+      font-size: 0.8125rem;
+      color: #94A3B8;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Live Clock and Status Center */
+    .header-center-info {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .clock-display-huge {
+      font-size: 2rem;
+      font-weight: 800;
+      font-family: 'Courier New', Courier, monospace;
+      color: #FFFFFF;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+    }
+
+    .date-display {
+      font-size: 0.95rem;
+      color: #CBD5E1;
+      font-weight: 600;
+    }
+
+    /* Actions: Mute sound, Fullscreen */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sync-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #94A3B8;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22C55E;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      animation: pulseGreen 2s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .btn-icon-board {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #FFFFFF;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon-board:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-icon-board.active-unmuted {
+      background: rgba(20, 184, 166, 0.25);
+      border-color: #14B8A6;
+      color: #2DD4BF;
+    }
+
+    /* ==========================================================================
+       Main Grid of Doctors (3 Columns x 2 Rows for up to 6 doctors)
+       ========================================================================== */
+    .board-main {
+      flex: 1;
+      padding: 18px 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 18px;
+      min-height: 0;
+    }
+
+    @media (max-width: 1199px) {
+      .board-main {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .board-main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+    }
+
+    /* Doctor Panel Card */
+    .doctor-panel {
+      background: rgba(15, 37, 69, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .doctor-panel:hover {
+      border-color: rgba(20, 184, 166, 0.4);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Doctor Header */
+    .doctor-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    .doctor-meta-name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    .doctor-meta-dept {
+      font-size: 0.875rem;
+      color: #2DD4BF;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .room-and-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .room-badge {
+      background: #06182E;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .status-badge-tv {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 5px 10px;
+      border-radius: 20px;
+    }
+
+    .status-badge-tv.status-available {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ADE80;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .status-badge-tv.status-break {
+      background: rgba(245, 158, 11, 0.18);
+      color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .status-badge-tv.status-off {
+      background: rgba(148, 163, 184, 0.18);
+      color: #CBD5E1;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    /* NOW SERVING Center Piece */
+    .serving-section {
+      text-align: center;
+      padding: 12px 0 10px;
+    }
+
+    .serving-label {
+      font-size: 0.8125rem;
+      font-weight: 800;
+      color: #94A3B8;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .serving-token-huge {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 2.75rem;
+      font-weight: 900;
+      color: #FFFFFF;
+      letter-spacing: 0.06em;
+      line-height: 1.1;
+      text-shadow: 0 0 20px rgba(45, 212, 191, 0.4);
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .serving-token-huge.waiting-state {
+      font-size: 1.5rem;
+      color: #64748B;
+      text-shadow: none;
+      font-weight: 700;
+    }
+
+    /* Soft Pulse Animation when Token Changes */
+    @keyframes tokenPulseGlow {
+      0% { transform: scale(1); color: #FFFFFF; text-shadow: 0 0 10px rgba(45, 212, 191, 0.4); }
+      40% { transform: scale(1.1); color: #38BDF8; text-shadow: 0 0 35px rgba(56, 189, 248, 0.9); }
+      100% { transform: scale(1); color: #FFFFFF; text-shadow: 0 0 20px rgba(45, 212, 191, 0.4); }
+    }
+
+    .pulse-animation-active {
+      animation: tokenPulseGlow 1.6s ease-in-out;
+    }
+
+    /* NEXT PATIENTS ROW (Next 3 tokens) */
+    .next-queue-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 10px;
+    }
+
+    .next-queue-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .next-queue-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .next-tokens-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .next-token-card {
+      background: rgba(6, 24, 46, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    /* Emergency Tokens: Red Left Border & Tag (Zero PII) */
+    .next-token-card.is-emergency {
+      border-left: 4px solid #EF4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .next-token-num {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: 0.04em;
+    }
+
+    .next-token-time {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #2DD4BF;
+      margin-top: 2px;
+    }
+
+    .emergency-tag {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #F87171;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 2px;
+    }
+
+    .no-waiters-note {
+      grid-column: span 3;
+      text-align: center;
+      font-size: 0.8125rem;
+      color: #64748B;
+      padding: 10px;
+    }
+
+    /* ==========================================================================
+       Bottom Public Announcement Ticker
+       ========================================================================== */
+    .board-footer-ticker {
+      height: 48px;
+      background: #040F1E;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .ticker-badge {
+      background: #0F766E;
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0 20px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+      box-shadow: 4px 0 12px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
+    }
+
+    .ticker-track-wrapper {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+
+    .ticker-content {
+      display: inline-block;
+      padding-left: 100%;
+      animation: tickerScroll 36s linear infinite;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #E2E8F0;
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 48px;
+    }
+
+    .ticker-bullet {
+      color: #2DD4BF;
+      margin-right: 10px;
+      font-size: 1.2rem;
+    }
+
+    @keyframes tickerScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TV BOARD HEADER -->
+  <header class="board-header">
+    <div class="brand-section">
+      <div class="hospital-logo-badge">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M12 8v8M8 12h8"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="hospital-name-text">Smart<span>OPD</span> Memorial Hospital</h1>
+        <span class="hospital-subtext">Outpatient Waiting Lobby • Live Queue Display</span>
+      </div>
+    </div>
+
+    <!-- Center Time & Date -->
+    <div class="header-center-info">
+      <div>
+        <div class="clock-display-huge" id="tv-clock">10:45:00 AM</div>
+      </div>
+      <div class="date-display" id="tv-date">Thursday, 15 Oct 2026</div>
+    </div>
+
+    <!-- Right Controls & Sync Status -->
+    <div class="header-actions">
+      <div class="sync-indicator">
+        <span class="pulse-dot"></span>
+        <span id="sync-label">Sync 3s</span>
+      </div>
+
+      <!-- Mute / Unmute Button -->
+      <button class="btn-icon-board" id="btn-toggle-sound" onclick="toggleAudioChime()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="sound-icon">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+        <span id="sound-btn-text">Sound: Muted</span>
+      </button>
+
+      <!-- Fullscreen Toggle Button -->
+      <button class="btn-icon-board" id="btn-fullscreen" onclick="toggleFullscreen()" title="Toggle Fullscreen (Key: F)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+        <span>Fullscreen [F]</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN 6-DOCTOR GRID -->
+  <main class="board-main" id="board-grid">
+    <!-- Populated dynamically by renderBoard() -->
+  </main>
+
+  <!-- BOTTOM PUBLIC TICKER -->
+  <footer class="board-footer-ticker">
+    <div class="ticker-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>Lobby Notices</span>
+    </div>
+    <div class="ticker-track-wrapper">
+      <div class="ticker-content" id="ticker-content">
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Please keep your printed token slip ready when your token is called.</span>
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Emergency cases are always prioritized immediately through clinical triage protocols.</span>
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Track live consultation progress on your phone by scanning the QR code on your slip.</span>
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Fairness safeguards protect waiting routine patients from queue starvation.</span>
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Complimentary drinking water and wheelchair assistance available at the reception desk.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+
+  <script>
+    /**
+     * SmartOPD – Public TV Display Board Controller
+     * High-contrast, privacy-first (ZERO patient names), WebAudio chime, and 3-second auto-refresh.
+     */
+
+    let isAudioEnabled = false;
+    let audioContext = null;
+    let previousServingMap = {}; // doctorId -> nowServingToken
+    let pollHandle = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initClock();
+      renderBoard();
+      // Start 3-second visibility-aware polling
+      pollHandle = SmartOPDApi.poll(renderBoard, 3000, null, (err) => {
+        console.warn('Display board poll error:', err);
+      });
+      // Update clock every second
+      setInterval(updateClockTime, 1000);
+
+      // Keyboard shortcut: key 'f' or 'F' toggles fullscreen
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'f' || e.key === 'F') {
+          // Avoid triggering if inside an input
+          if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            toggleFullscreen();
+          }
+        }
+      });
+    });
+
+    /**
+     * Synthesizes pleasant two-tone hospital chime using WebAudio API (Zero audio files)
+     */
+    function playHospitalChime() {
+      if (!isAudioEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioContext) {
+          audioContext = new AudioCtx();
+        }
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+
+        const now = audioContext.currentTime;
+
+        // Tone 1: D5 (587.33 Hz)
+        const osc1 = audioContext.createOscillator();
+        const gain1 = audioContext.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now);
+        gain1.gain.setValueAtTime(0.12, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc1.connect(gain1);
+        gain1.connect(audioContext.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.22);
+
+        // Tone 2: A5 (880 Hz)
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, now + 0.16);
+        gain2.gain.setValueAtTime(0.16, now + 0.16);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        osc2.start(now + 0.16);
+        osc2.stop(now + 0.55);
+      } catch (err) {
+        console.warn('WebAudio chime notice:', err);
+      }
+    }
+
+    /**
+     * Sound Toggle
+     */
+    function toggleAudioChime() {
+      isAudioEnabled = !isAudioEnabled;
+      const btn = document.getElementById('btn-toggle-sound');
+      const text = document.getElementById('sound-btn-text');
+      const icon = document.getElementById('sound-icon');
+
+      if (isAudioEnabled) {
+        btn.classList.add('active-unmuted');
+        text.innerText = 'Sound: Chime On';
+        icon.innerHTML = `
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        `;
+        // Play one chime to confirm
+        playHospitalChime();
+      } else {
+        btn.classList.remove('active-unmuted');
+        text.innerText = 'Sound: Muted';
+        icon.innerHTML = `
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        `;
+      }
+    }
+
+    /**
+     * Fullscreen Toggle
+     */
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.warn('Fullscreen request failed:', err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    /**
+     * Display board clock updater
+     */
+    function initClock() {
+      updateClockTime();
+    }
+
+    function updateClockTime() {
+      const clockEl = document.getElementById('tv-clock');
+      const dateEl = document.getElementById('tv-date');
+      if (!clockEl || !dateEl) return;
+
+      const now = new Date();
+      clockEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      dateEl.innerText = now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    let isFetchingBoard = false;
+    let initialBoardLoaded = false;
+
+    /**
+     * Renders Public TV Grid
+     * PRIVACY RULE: Uses GET /api/public/board which exposes ONLY tokens, doctors, rooms, and times.
+     */
+    async function renderBoard() {
+      const grid = document.getElementById('board-grid');
+      if (!grid) return;
+
+      if (!initialBoardLoaded) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 80px 20px; color: #94A3B8;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #FFFFFF; margin-bottom: 8px;">
+              Loading Live Waiting Room Display...
+            </div>
+            <div>Connecting to SmartOPD consultation rooms</div>
+          </div>
+        `;
+      }
+
+      if (isFetchingBoard) return;
+      isFetchingBoard = true;
+
+      try {
+        const rawBoard = await SmartOPDApi.get('/api/public/board');
+        const doctorsData = SmartOPDAdapters.adaptPublicBoard(rawBoard);
+        initialBoardLoaded = true;
+
+        let hasTokenChanged = false;
+
+        // Check for changes in nowServingToken to trigger chime & pulse
+        doctorsData.forEach(d => {
+          const prevToken = previousServingMap[d.doctorId];
+          if (d.nowServingToken && d.nowServingToken !== prevToken && prevToken !== undefined) {
+            hasTokenChanged = true;
+          }
+        });
+
+        if (hasTokenChanged) {
+          playHospitalChime();
+        }
+
+        renderBoardCards(grid, doctorsData);
+      } catch (err) {
+        if (!initialBoardLoaded) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+              <div style="font-size: 1.35rem; font-weight: 700; color: #EF4444; margin-bottom: 12px;">
+                Unable to Connect to SmartOPD Server
+              </div>
+              <p style="color: #94A3B8; max-width: 480px; margin: 0 auto 20px;">
+                ${escapeHtml(err.message || 'Cannot reach server. Start the backend with mvn spring-boot:run')}
+              </p>
+              <button type="button" class="btn-audio-enable" onclick="renderBoard()" style="padding: 10px 22px; font-size: 1rem; cursor: pointer;">
+                Retry Connection
+              </button>
+            </div>
+          `;
+        }
+      } finally {
+        isFetchingBoard = false;
+      }
+    }
+
+    function renderBoardCards(grid, doctorsData) {
+      let html = '';
+      doctorsData.forEach(doc => {
+        const isPulse = doc.nowServingToken && (doc.nowServingToken !== previousServingMap[doc.doctorId]);
+        previousServingMap[doc.doctorId] = doc.nowServingToken;
+
+        // Status styling
+        let statusClass = 'status-available';
+        let statusDotColor = '#22C55E';
+        if (doc.status === 'On Break') {
+          statusClass = 'status-break';
+          statusDotColor = '#F59E0B';
+        } else if (doc.status === 'Off Duty') {
+          statusClass = 'status-off';
+          statusDotColor = '#94A3B8';
+        }
+
+        // Next 3 tokens
+        const next3 = (doc.nextTokens || []).slice(0, 3);
+        let nextTokensHTML = '';
+
+        if (next3.length === 0) {
+          nextTokensHTML = '<div class="no-waiters-note">No patients currently waiting</div>';
+        } else {
+          next3.forEach(t => {
+            const emergencyClass = t.isEmergency ? 'is-emergency' : '';
+            const emergencyTagHTML = t.isEmergency ? '<span class="emergency-tag">Emergency</span>' : '';
+
+            nextTokensHTML += `
+              <div class="next-token-card ${emergencyClass}">
+                <span class="next-token-num">${t.token}</span>
+                <span class="next-token-time">${t.estimatedStart}</span>
+                ${emergencyTagHTML}
+              </div>
+            `;
+          });
+        }
+
+        // Now serving display
+        let servingHTML = '';
+        if (doc.nowServingToken) {
+          servingHTML = `
+            <span class="serving-label">NOW SERVING</span>
+            <div class="serving-token-huge ${isPulse ? 'pulse-animation-active' : ''}">${doc.nowServingToken}</div>
+          `;
+        } else {
+          servingHTML = `
+            <span class="serving-label">CURRENT STATUS</span>
+            <div class="serving-token-huge waiting-state">Waiting for Next Patient</div>
+          `;
+        }
+
+        html += `
+          <div class="doctor-panel">
+            <!-- Header -->
+            <div class="doctor-header-row">
+              <div>
+                <div class="doctor-meta-name">${doc.doctorName}</div>
+                <div class="doctor-meta-dept">${doc.department}</div>
+              </div>
+              <div class="room-and-status">
+                <span class="room-badge">Room ${doc.room}</span>
+                <span class="status-badge-tv ${statusClass}">
+                  <span style="width:7px; height:7px; border-radius:50%; background:${statusDotColor}; display:inline-block;"></span>
+                  ${doc.status}
+                </span>
+              </div>
+            </div>
+
+            <!-- Serving Hero -->
+            <div class="serving-section">
+              ${servingHTML}
+            </div>
+
+            <!-- Next Queue Row -->
+            <div class="next-queue-section">
+              <div class="next-queue-header">
+                <span class="next-queue-label">UP NEXT IN QUEUE</span>
+                <span style="font-size:0.75rem; color:#64748B;">Est. Start Time</span>
+              </div>
+              <div class="next-tokens-row">
+                ${nextTokensHTML}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      grid.innerHTML = html;
+
+      // Update dynamic ticker messages if any doctor is On Break
+      updateDynamicTicker(doctorsData);
+    }
+
+    /**
+     * Appends dynamic messages to public announcements ticker
+     */
+    function updateDynamicTicker(doctorsData) {
+      const ticker = document.getElementById('ticker-content');
+      if (!ticker) return;
+
+      const breakDocs = doctorsData.filter(d => d.status === 'On Break');
+      let extra = '';
+
+      if (breakDocs.length > 0) {
+        breakDocs.forEach(d => {
+          extra += `<span class="ticker-item"><span class="ticker-bullet">•</span>Doctor Announcement: ${d.doctorName} (${d.department}, Room ${d.room}) is currently On Break. Consultations will resume shortly.</span>`;
+        });
+      }
+
+      ticker.innerHTML = `
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Please keep your printed token slip ready when your token is called.</span>
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Emergency cases are always prioritized immediately through clinical triage protocols.</span>
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Track live consultation progress on your phone by scanning the QR code on your slip.</span>
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Fairness safeguards protect waiting routine patients from queue starvation.</span>
+        ${extra}
+        <span class="ticker-item"><span class="ticker-bullet">•</span>Complimentary drinking water and wheelchair assistance available at the reception desk.</span>
+      `;
+    }
+  </script>
+</body>
+</html>

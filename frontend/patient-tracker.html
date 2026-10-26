@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Patient Token Tracker – SmartOPD</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+
+  <style>
+    /* ==========================================================================
+       Patient Token Tracker - Mobile-First Styling
+       Optimized for hand-held smartphones, high legibility & arm's length reading
+       ========================================================================== */
+
+    :root {
+      --lane-bg: #E2E8F0;
+      --lane-active: var(--primary-teal);
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--navy-dark);
+      min-height: 100vh;
+    }
+
+    /* Guest Header Bar (shown when guest tracking mode is active) */
+    .guest-header {
+      background: var(--navy-dark);
+      color: #FFFFFF;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--primary-teal);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .guest-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #FFFFFF;
+    }
+
+    .guest-logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: rgba(15, 118, 110, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-teal);
+      border: 1px solid rgba(15, 118, 110, 0.6);
+    }
+
+    .guest-brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .guest-brand-title span {
+      color: var(--primary-teal);
+    }
+
+    .guest-brand-subtitle {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.65);
+      display: block;
+      margin-top: -2px;
+    }
+
+    /* Single-column mobile container */
+    .tracker-container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px 16px 48px;
+    }
+
+    /* Hero Search Card */
+    .search-hero-card {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+      margin-bottom: 24px;
+    }
+
+    .search-hero-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-hero-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .search-form-row {
+      display: flex;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    @media (min-width: 480px) {
+      .search-form-row {
+        flex-direction: row;
+      }
+    }
+
+    .token-input-large {
+      flex: 1;
+      height: 52px;
+      font-size: 1.35rem;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0 16px;
+      border: 2px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      color: var(--navy-dark);
+      background: #FAFCFD;
+      transition: all var(--transition-fast);
+    }
+
+    .token-input-large:focus {
+      outline: none;
+      border-color: var(--primary-teal);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+      background: #FFFFFF;
+    }
+
+    .btn-track {
+      height: 52px;
+      padding: 0 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      background-color: var(--primary-teal);
+      color: #FFFFFF;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: background-color var(--transition-fast), transform var(--transition-fast);
+      touch-action: manipulation;
+    }
+
+    .btn-track:hover {
+      background-color: var(--primary-teal-dark);
+      transform: translateY(-1px);
+    }
+
+    /* Sample Token Chips */
+    .sample-chips-row {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.8125rem;
+    }
+
+    .sample-chips-label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+
+    .sample-chip {
+      background: #F1F5F9;
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-family: monospace;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--navy-dark);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sample-chip:hover {
+      background: rgba(15, 118, 110, 0.12);
+      border-color: var(--primary-teal);
+      color: var(--primary-teal);
+    }
+
+    /* Auto-refresh Status Bar */
+    .refresh-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding: 0 4px;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .refresh-live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-available);
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+      animation: pulseGreen 2s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+    }
+
+    .btn-manual-refresh {
+      background: none;
+      border: none;
+      color: var(--primary-teal);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-manual-refresh:hover {
+      background: rgba(15, 118, 110, 0.08);
+    }
+
+    /* Primary Result Card */
+    .status-card {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .status-card-header {
+      padding: 24px;
+      background: #FAFCFD;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .greeting-text {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .token-display-huge {
+      font-size: 2.25rem;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 900;
+      color: var(--navy-dark);
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+    }
+
+    /* Urgent / Next-In-Line / Consultation Banner */
+    .urgent-banner {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 0.9375rem;
+      border-bottom: 1px solid transparent;
+    }
+
+    .banner-in-consultation {
+      background: rgba(22, 163, 74, 0.12);
+      color: #15803D;
+      border-color: rgba(22, 163, 74, 0.3);
+    }
+
+    .banner-next {
+      background: rgba(217, 119, 6, 0.12);
+      color: #B45309;
+      border-color: rgba(217, 119, 6, 0.3);
+      animation: alertGlow 1.8s infinite alternate;
+    }
+
+    .banner-completed {
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--primary-teal);
+      border-color: rgba(15, 118, 110, 0.3);
+    }
+
+    @keyframes alertGlow {
+      from { background-color: rgba(217, 119, 6, 0.08); }
+      to { background-color: rgba(217, 119, 6, 0.18); }
+    }
+
+    /* Queue Lane Graphic */
+    .queue-lane-wrapper {
+      padding: 24px;
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .lane-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .lane-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .lane-count-text {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--primary-teal);
+    }
+
+    .queue-lane {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      padding: 14px 10px;
+      background: #F8FAFC;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      overflow-x: auto;
+    }
+
+    .lane-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 48px;
+      position: relative;
+    }
+
+    .lane-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #CBD5E1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      transition: all var(--transition-fast);
+    }
+
+    .lane-dot.dot-ahead {
+      background: #94A3B8;
+    }
+
+    .lane-dot.dot-you {
+      width: 28px;
+      height: 28px;
+      background: var(--primary-teal);
+      color: #FFFFFF;
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.25);
+      animation: pulseYou 2s infinite;
+    }
+
+    @keyframes pulseYou {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .lane-node-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .lane-node-label.label-you {
+      color: var(--primary-teal);
+      font-weight: 800;
+    }
+
+    .lane-arrow {
+      color: #CBD5E1;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .lane-room-node {
+      margin-left: auto;
+      padding-left: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .lane-room-badge {
+      background: var(--navy-dark);
+      color: #FFFFFF;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    /* Key Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 24px;
+      background: #FAFCFD;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    @media (max-width: 480px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .metric-card-inner {
+      background: #FFFFFF;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .metric-label-small {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .metric-value-huge {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--navy-dark);
+      line-height: 1.2;
+    }
+
+    .metric-sub-note {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Explainability Callout */
+    .explain-card {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .explain-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      margin-bottom: 8px;
+    }
+
+    .explain-box-text {
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--navy-light);
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+
+    /* Fairness Boost Note (Violet) */
+    .note-fairness {
+      background: var(--fairness-bg);
+      border-left: 4px solid var(--fairness-violet);
+      padding: 12px 14px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      color: #4C1D95;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    /* Emergency Delay Note (Calm Reassuring) */
+    .note-emergency {
+      background: rgba(220, 38, 38, 0.08);
+      border-left: 4px solid #DC2626;
+      padding: 12px 14px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      color: #991B1B;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    /* Patient Journey Timeline */
+    .journey-section {
+      padding: 24px;
+    }
+
+    .journey-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .timeline-list {
+      position: relative;
+      padding-left: 24px;
+    }
+
+    .timeline-list::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 6px;
+      bottom: 10px;
+      width: 2px;
+      background: var(--border-light);
+    }
+
+    .timeline-step {
+      position: relative;
+      margin-bottom: 18px;
+    }
+
+    .timeline-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-marker {
+      position: absolute;
+      left: -24px;
+      top: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 3px solid var(--primary-teal);
+      z-index: 2;
+    }
+
+    .step-marker.marker-active {
+      background: var(--primary-teal);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.25);
+    }
+
+    .step-marker.marker-fairness {
+      border-color: var(--fairness-violet);
+      background: var(--fairness-violet);
+    }
+
+    .step-time {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .step-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--navy-dark);
+    }
+
+    .step-desc {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* Empty / Not Found Card */
+    .not-found-card {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 36px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      text-align: center;
+    }
+
+    .not-found-icon-box {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(220, 38, 38, 0.1);
+      color: #DC2626;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .tips-box {
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin: 16px auto 0;
+      max-width: 440px;
+      text-align: left;
+      font-size: 0.8125rem;
+      color: var(--navy-dark);
+    }
+
+    .tips-box ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      color: var(--text-muted);
+    }
+
+    .tips-box li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dynamic Shell Structure: Authenticated Patient gets App Shell; Guest gets Clean Top Header -->
+  <div id="portal-wrapper">
+    <!-- Top Bar for Guest / Phone View -->
+    <header class="guest-header" id="guest-header" style="display: none;">
+      <a href="patient-tracker.html" class="guest-brand">
+        <div class="guest-logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M12 8v8M8 12h8"/>
+          </svg>
+        </div>
+        <div>
+          <span class="guest-brand-title">Smart<span>OPD</span></span>
+          <span class="guest-brand-subtitle">Patient Live Queue</span>
+        </div>
+      </a>
+      <div>
+        <a href="login.html" class="btn btn-secondary btn-sm" style="font-size: 0.8125rem; padding: 6px 12px;">
+          Staff Login
+        </a>
+      </div>
+    </header>
+
+    <!-- App Shell Sidebar for Authenticated Patient -->
+    <div class="app-shell" id="app-shell-wrapper">
+      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+      
+      <aside class="app-sidebar" id="app-sidebar">
+        <div class="sidebar-header">
+          <a href="patient-tracker.html" class="sidebar-brand">
+            <div class="brand-logo-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="M12 8v8M8 12h8"/>
+              </svg>
+            </div>
+            <div class="brand-text-group">
+              <span class="brand-name">Smart<span class="text-teal-accent">OPD</span></span>
+              <span class="brand-subtext">Queue Tracker</span>
+            </div>
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">PATIENT PORTAL</div>
+          <ul class="nav-list" id="sidebar-nav-links">
+            <!-- Populated by app.js -->
+          </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="sidebar-logout-btn" id="logout-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="app-main" id="app-main-content">
+        <!-- Top Bar for Authenticated Patient -->
+        <header class="app-topbar" id="app-topbar">
+          <div class="topbar-left">
+            <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Toggle Navigation">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <div class="topbar-heading">
+              <h1 class="page-title">Live OPD Queue Tracker</h1>
+              <span class="page-subtitle">Real-Time Room Progression & Explainable Wait Times</span>
+            </div>
+          </div>
+
+          <div class="topbar-right">
+            <div class="live-clock-card" title="Current Hospital Time">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span id="live-clock">--:--:--</span>
+            </div>
+
+            <div class="user-profile-chip" id="user-chip"></div>
+          </div>
+        </header>
+
+        <!-- Main Body Content Area -->
+        <main class="app-content" style="padding: 0;">
+          <div class="tracker-container">
+
+            <!-- HERO SEARCH CARD -->
+            <div class="search-hero-card">
+              <div class="search-hero-title">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-teal)" stroke-width="2.4">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <span>Track Your OPD Token</span>
+              </div>
+              <p class="search-hero-desc">Enter the token number printed on your thermal slip to follow live consultation progression.</p>
+              
+              <form id="tracker-search-form" onsubmit="event.preventDefault(); handleSearchSubmit();">
+                <div class="search-form-row">
+                  <input 
+                    type="text" 
+                    id="token-search-input" 
+                    class="token-input-large" 
+                    placeholder="e.g. CARD-S-007" 
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    required
+                  >
+                  <button type="submit" class="btn-track" id="btn-track-submit">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span>Track My Token</span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Dynamic Sample Chips -->
+              <div class="sample-chips-row" id="sample-chips-container">
+                <span class="sample-chips-label">Try a sample token:</span>
+                <!-- Populated dynamically from waiting tokens -->
+              </div>
+            </div>
+
+            <!-- REFRESH STATUS BAR -->
+            <div class="refresh-bar">
+              <div class="refresh-live-pill">
+                <span class="pulse-dot"></span>
+                <span id="refresh-status-text">Live Sync Active</span>
+              </div>
+              <button class="btn-manual-refresh" id="btn-manual-refresh" onclick="refreshTracker(true)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" id="refresh-icon">
+                  <path d="M23 4v6h-6"></path>
+                  <path d="M1 20v-6h6"></path>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Refresh Now</span>
+              </button>
+            </div>
+
+            <!-- RESULT AREA (Populated dynamically) -->
+            <div id="tracker-result-area">
+              <!-- Default state or dynamic content injected here -->
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared App & REST Client Scripts -->
+  <script src="js/api-client.js"></script>
+  <script src="js/api-adapters.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    /**
+     * SmartOPD – Patient Tracker Controller
+     * Handles Guest & Authenticated mode, real-time polling (5s), and privacy-safe queue views.
+     */
+
+    let currentTrackedToken = null;
+    let autoRefreshInterval = null;
+    let isGuest = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initTrackerMode();
+      populateSampleChips();
+      detectInitialToken();
+      startPolling();
+    });
+
+    /**
+     * Determine Guest vs. Logged-in Patient View
+     */
+    function initTrackerMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const guestParam = urlParams.get('guest');
+      const rawUser = sessionStorage.getItem('smartopd_user');
+
+      // Guest mode if ?guest=true or no user logged in
+      if (guestParam === 'true' || !rawUser) {
+        isGuest = true;
+        // Show guest top header, hide full sidebar
+        document.getElementById('guest-header').style.display = 'flex';
+        document.getElementById('app-sidebar').style.display = 'none';
+        document.getElementById('app-topbar').style.display = 'none';
+        const main = document.getElementById('app-main-content');
+        if (main) {
+          main.style.marginLeft = '0';
+          main.style.width = '100%';
+        }
+      } else {
+        // Authenticated Patient: requireAuth & init full layout
+        SmartOPD.requireAuth(['Patient'], true);
+        SmartOPD.initLayout('tracker');
+      }
+    }
+
+    /**
+     * Auto-load token from URL (?token=XXXX) or localStorage
+     */
+    async function detectInitialToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token');
+      const savedToken = localStorage.getItem('smartopd_last_tracked_token');
+
+      const tokenToLoad = urlToken || savedToken;
+      if (tokenToLoad) {
+        document.getElementById('token-search-input').value = tokenToLoad.trim();
+        trackToken(tokenToLoad.trim(), false);
+      } else {
+        try {
+          const sampleTokens = await SmartOPDApi.get('/api/public/sample-tokens');
+          if (Array.isArray(sampleTokens) && sampleTokens.length > 0) {
+            const defaultToken = sampleTokens[0];
+            document.getElementById('token-search-input').value = defaultToken;
+            trackToken(defaultToken, false);
+          }
+        } catch (e) {
+          // No sample tokens available
+        }
+      }
+    }
+
+    /**
+     * Dynamically populate sample chips from current waiting tokens via API
+     */
+    async function populateSampleChips() {
+      const container = document.getElementById('sample-chips-container');
+      if (!container) return;
+
+      try {
+        const tokens = await SmartOPDApi.get('/api/public/sample-tokens');
+        if (!Array.isArray(tokens) || tokens.length === 0) {
+          container.innerHTML = '<span class="sample-chips-label">No active tokens in queue</span>';
+          return;
+        }
+
+        let html = '<span class="sample-chips-label">Try a sample token:</span>';
+        tokens.slice(0, 4).forEach(tok => {
+          html += `
+            <button type="button" class="sample-chip" onclick="selectSampleChip('${escapeHtml(tok)}')">
+              <span style="width:6px; height:6px; border-radius:50%; background:var(--primary-teal);"></span>
+              ${escapeHtml(tok)}
+            </button>
+          `;
+        });
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '';
+      }
+    }
+
+    function selectSampleChip(token) {
+      document.getElementById('token-search-input').value = token;
+      trackToken(token, false);
+    }
+
+    function handleSearchSubmit() {
+      const input = document.getElementById('token-search-input');
+      const token = input.value.trim();
+      if (!token) return;
+      trackToken(token, false);
+    }
+
+    function renderLoading(token) {
+      const container = document.getElementById('tracker-result-area');
+      container.innerHTML = `
+        <div class="status-card text-center" style="padding: 48px 24px;">
+          <div style="font-size: 1.15rem; font-weight: 700; color: var(--navy-dark); margin-bottom: 8px;">
+            Loading Token ${escapeHtml(token)}...
+          </div>
+          <div class="text-muted text-sm">Connecting to live OPD queue system</div>
+        </div>
+      `;
+    }
+
+    function renderError(token, errorMsg) {
+      const container = document.getElementById('tracker-result-area');
+      container.innerHTML = `
+        <div class="not-found-card">
+          <div class="not-found-icon-box" style="background: rgba(220, 38, 38, 0.1); color: #DC2626;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h2 style="font-size:1.35rem; margin-bottom: 6px; color:var(--navy-dark);">Unable to Load Queue Status</h2>
+          <p class="text-muted" style="max-width: 420px; margin: 0 auto 16px;">
+            ${escapeHtml(errorMsg || 'Cannot connect to the SmartOPD server.')}
+          </p>
+          <button type="button" class="btn btn-primary btn-md" onclick="trackToken('${escapeHtml(token)}', false)">
+            <span>Retry</span>
+          </button>
+        </div>
+      `;
+    }
+
+    /**
+     * Fetches privacy-safe queue summary and renders tracker card
+     */
+    async function trackToken(token, isBackground = false) {
+      if (!token) return;
+      currentTrackedToken = token.trim();
+      localStorage.setItem('smartopd_last_tracked_token', currentTrackedToken);
+
+      const searchBtn = document.getElementById('btn-search-token');
+      if (searchBtn) searchBtn.disabled = true;
+
+      if (!isBackground) {
+        renderLoading(currentTrackedToken);
+      }
+
+      try {
+        const raw = await SmartOPDApi.get(`/api/public/tracker/${encodeURIComponent(currentTrackedToken)}`);
+        const summary = SmartOPDAdapters.adaptPublicTracker(raw);
+        if (!summary) {
+          renderNotFound(currentTrackedToken);
+        } else {
+          renderStatusCard(summary);
+        }
+      } catch (err) {
+        if (err.status === 404) {
+          renderNotFound(currentTrackedToken);
+        } else {
+          if (!isBackground) {
+            renderError(currentTrackedToken, err.message);
+          }
+          if (window.SmartOPD && typeof SmartOPD.showToast === 'function') {
+            SmartOPD.showToast('Tracker Error', err.message, 'error');
+          }
+        }
+      } finally {
+        if (searchBtn) searchBtn.disabled = false;
+      }
+    }
+
+    /**
+     * Render the main status card, queue lane, and journey timeline
+     */
+    function renderStatusCard(data) {
+      const container = document.getElementById('tracker-result-area');
+      const timeline = data.timeline || [];
+
+      // Status badge styling
+      let statusBadgeClass = 'badge-waiting';
+      let statusLabel = data.status;
+      if (data.status === 'In Consultation') {
+        statusBadgeClass = 'badge-active';
+        statusLabel = 'In Consultation';
+      } else if (data.status === 'Completed') {
+        statusBadgeClass = 'badge-completed';
+      } else if (data.status === 'No-Show') {
+        statusBadgeClass = 'badge-emergency';
+      }
+
+      // Banner logic
+      let urgentBannerHTML = '';
+      if (data.status === 'In Consultation') {
+        urgentBannerHTML = `
+          <div class="urgent-banner banner-in-consultation">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div>
+              <span>Please proceed to Room ${data.room} immediately!</span>
+              <div style="font-size:0.8125rem; font-weight:400; opacity:0.9;">${data.doctor} is ready to see you now.</div>
+            </div>
+          </div>
+        `;
+      } else if (data.isNext) {
+        urgentBannerHTML = `
+          <div class="urgent-banner banner-next">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>
+              <span>You are NEXT in line!</span>
+              <div style="font-size:0.8125rem; font-weight:400; opacity:0.9;">Please be ready near Room ${data.room}. Your consultation starts shortly.</div>
+            </div>
+          </div>
+        `;
+      } else if (data.status === 'Completed') {
+        urgentBannerHTML = `
+          <div class="urgent-banner banner-completed">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div>
+              <span>Consultation Completed</span>
+              <div style="font-size:0.8125rem; font-weight:400; opacity:0.9;">Thank you for visiting SmartOPD Memorial Hospital.</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Queue Lane Graphic HTML
+      let laneHTML = '';
+      if (data.status === 'Waiting') {
+        const aheadCount = data.patientsAhead;
+        let dotsHTML = '';
+        const displayAhead = Math.min(aheadCount, 5);
+
+        for (let i = 1; i <= displayAhead; i++) {
+          dotsHTML += `
+            <div class="lane-node">
+              <div class="lane-dot dot-ahead">${i}</div>
+              <span class="lane-node-label">Ahead</span>
+            </div>
+            <div class="lane-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          `;
+        }
+
+        if (aheadCount > 5) {
+          dotsHTML += `
+            <div class="lane-node">
+              <div class="lane-dot" style="background:#64748B;">+${aheadCount - 5}</div>
+              <span class="lane-node-label">More</span>
+            </div>
+            <div class="lane-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          `;
+        }
+
+        // YOU Node
+        dotsHTML += `
+          <div class="lane-node">
+            <div class="lane-dot dot-you">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <span class="lane-node-label label-you">YOU</span>
+          </div>
+          <div class="lane-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        `;
+
+        laneHTML = `
+          <div class="queue-lane-wrapper">
+            <div class="lane-heading-row">
+              <span class="lane-title">Queue Progress Track</span>
+              <span class="lane-count-text">
+                ${aheadCount === 0 ? 'You are at the front of the queue!' : `${aheadCount} patient${aheadCount > 1 ? 's' : ''} ahead of you`}
+              </span>
+            </div>
+            <div class="queue-lane">
+              ${dotsHTML}
+              <div class="lane-room-node">
+                <div class="lane-room-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                  Room ${data.room}
+                </div>
+                <span class="lane-node-label">${data.doctor}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Explainability and Dynamic Notes
+      let fairnessNoteHTML = '';
+      if (data.fairnessBoost) {
+        fairnessNoteHTML = `
+          <div class="note-fairness">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:1px;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+            <div>
+              <strong>Fairness Anti-Starvation Boost Applied:</strong>
+              <div>You were moved forward because you have waited longer than the allowed threshold.</div>
+            </div>
+          </div>
+        `;
+      }
+
+      let emergencyNoteHTML = '';
+      if (data.isEmergencyDelayed) {
+        emergencyNoteHTML = `
+          <div class="note-emergency">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:1px;">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <div>
+              <strong>Emergency Priority Notice:</strong>
+              <div>A critical medical emergency is currently being treated in this department. Routine timings have moved by approximately 10–15 minutes.</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Build Journey Steps
+      let timelineHTML = '';
+      if (timeline.length === 0) {
+        timelineHTML = '<div class="text-muted text-sm">No recorded timeline events yet.</div>';
+      } else {
+        timeline.forEach((evt, idx) => {
+          const isLatest = idx === timeline.length - 1;
+          const timeFormatted = new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          let markerClass = isLatest ? 'step-marker marker-active' : 'step-marker';
+          if (evt.type === 'FAIRNESS_BOOST') markerClass += ' marker-fairness';
+
+          timelineHTML += `
+            <div class="timeline-step">
+              <div class="${markerClass}"></div>
+              <div class="step-time">${timeFormatted}</div>
+              <div class="step-title">${formatEventType(evt.type)}</div>
+              <div class="step-desc">${evt.reason || 'Event recorded in system audit log.'}</div>
+            </div>
+          `;
+        });
+      }
+
+      // Assemble Status Card
+      container.innerHTML = `
+        <div class="status-card">
+          <!-- Card Header -->
+          <div class="status-card-header">
+            <div>
+              <div class="greeting-text">Hello, ${data.firstName}</div>
+              <div class="token-display-huge">${data.token}</div>
+              <div class="text-sm text-muted mt-1">
+                ${data.department} • Consulting Doctor: <strong>${data.doctor}</strong> (Room ${data.room})
+              </div>
+            </div>
+            <div>
+              <span class="badge ${statusBadgeClass}" style="font-size: 0.875rem; padding: 6px 14px;">
+                ${statusLabel}
+              </span>
+            </div>
+          </div>
+
+          <!-- Urgent Alert Banners -->
+          ${urgentBannerHTML}
+
+          <!-- Queue Progress Lane -->
+          ${laneHTML}
+
+          <!-- Key Metrics Grid -->
+          <div class="metrics-grid">
+            <div class="metric-card-inner">
+              <span class="metric-label-small">Estimated Consultation Start</span>
+              <div class="metric-value-huge text-teal">${data.estimatedStart}</div>
+              <span class="metric-sub-note">
+                ${data.status === 'Waiting' ? `Approx. ${data.estimatedWaitMinutes} mins wait remaining` : 'Live Room Status'}
+              </span>
+            </div>
+
+            <div class="metric-card-inner">
+              <span class="metric-label-small">Consultation Location</span>
+              <div class="metric-value-huge" style="font-size: 1.35rem;">Room ${data.room}</div>
+              <span class="metric-sub-note">${data.department} Wing</span>
+            </div>
+          </div>
+
+          <!-- Explainability Section -->
+          <div class="explain-card">
+            <div class="explain-title-row">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary-teal)" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>Why you are at this position:</span>
+            </div>
+            <div class="explain-box-text">
+              ${data.explanation}
+            </div>
+            ${fairnessNoteHTML}
+            ${emergencyNoteHTML}
+          </div>
+
+          <!-- Journey Timeline Section -->
+          <div class="journey-section">
+            <div class="journey-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              <span>Your OPD Journey</span>
+            </div>
+            <div class="timeline-list">
+              ${timelineHTML}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Update refresh label
+      updateRefreshTimeLabel();
+    }
+
+    function formatEventType(type) {
+      const map = {
+        'REGISTERED': 'Token Generated & Registered',
+        'MOVED_UP': 'Moved Forward in Queue',
+        'MOVED_DOWN': 'Queue Adjusted',
+        'FAIRNESS_BOOST': 'Fairness Anti-Starvation Boost (+150 pts)',
+        'EMERGENCY_OVERRIDE': 'Emergency Priority Active',
+        'CALLED': 'Called into Consultation Room',
+        'COMPLETED': 'Consultation Completed',
+        'NO_SHOW': 'Marked as No-Show'
+      };
+      return map[type] || type;
+    }
+
+    function renderNotFound(token) {
+      const container = document.getElementById('tracker-result-area');
+      container.innerHTML = `
+        <div class="not-found-card">
+          <div class="not-found-icon-box">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <h2 style="font-size:1.35rem; margin-bottom: 6px; color:var(--navy-dark);">Token Not Found</h2>
+          <p class="text-muted" style="max-width: 420px; margin: 0 auto 16px;">
+            We could not find active records for token <strong>"${escapeHtml(token)}"</strong>.
+          </p>
+          <div class="tips-box">
+            <strong>Helpful Tips:</strong>
+            <ul>
+              <li>Check your thermal token slip for the exact code (e.g., <code>CARD-S-007</code>, <code>GEN-W-002</code>).</li>
+              <li>Token lookups are case-insensitive. Spaces do not affect the search.</li>
+              <li>If you just completed registration at reception, please wait a few seconds and tap <strong>Refresh Now</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function updateRefreshTimeLabel() {
+      const el = document.getElementById('refresh-status-text');
+      if (el) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        el.innerText = `Updated at ${timeStr}`;
+      }
+    }
+
+    /**
+     * Manual or Periodic Refresh
+     */
+    function refreshTracker(isManual = false) {
+      if (isManual) {
+        const icon = document.getElementById('refresh-icon');
+        if (icon) {
+          icon.style.transform = 'rotate(360deg)';
+          icon.style.transition = 'transform 0.5s ease';
+          setTimeout(() => {
+            icon.style.transform = 'none';
+            icon.style.transition = 'none';
+          }, 500);
+        }
+      }
+
+      if (currentTrackedToken) {
+        trackToken(currentTrackedToken, !isManual);
+      }
+      populateSampleChips();
+    }
+
+    /**
+     * Polls queue state every 5 seconds using visibility-aware polling
+     */
+    function startPolling() {
+      if (pollHandle) pollHandle.stop();
+      pollHandle = SmartOPDApi.poll(
+        async () => {
+          if (currentTrackedToken) {
+            await trackToken(currentTrackedToken, true);
+          }
+          await populateSampleChips();
+        },
+        5000,
+        null,
+        (err) => {
+          console.warn('Poll refresh failed:', err);
+        }
+      );
+    }
+  </script>
+</body>
+</html>

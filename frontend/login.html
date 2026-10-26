@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartOPD – Hospital Queue Management Portal</title>
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  
+  <style>
+    /* ==========================================================================
+       Login Page Split-Screen Layout
+       ========================================================================== */
+    .login-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+      background-color: var(--bg-page);
+    }
+
+    /* Left Gradient Hero Panel */
+    .hero-panel {
+      flex: 0 0 45%;
+      background: linear-gradient(150deg, #06182E 0%, #0B2545 42%, #0F766E 100%);
+      color: #FFFFFF;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle decorative background wave/grid pattern */
+    .hero-panel::before {
+      content: "";
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(15, 118, 110, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      bottom: -60px;
+      left: -60px;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, rgba(11, 37, 69, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-header {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      text-decoration: none;
+    }
+
+    .hero-logo-box {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--sky-accent), var(--primary-teal));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px rgba(15, 118, 110, 0.4);
+    }
+
+    .hero-brand-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-brand-name span {
+      color: var(--sky-accent);
+    }
+
+    .hero-tagline {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 14px;
+      color: #F8FAFC;
+      letter-spacing: -0.015em;
+    }
+
+    .hero-subtext {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.5;
+      max-width: 460px;
+      margin-bottom: 36px;
+    }
+
+    /* 3 Feature Highlight Cards */
+    .features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      z-index: 2;
+      max-width: 500px;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: transform var(--transition-fast), background-color var(--transition-fast);
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateX(4px);
+    }
+
+    .feature-icon-wrapper {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-icon-emergency {
+      background: rgba(220, 38, 38, 0.2);
+      color: #FCA5A5;
+      border: 1px solid rgba(220, 38, 38, 0.4);
+    }
+
+    .feature-icon-fairness {
+      background: rgba(124, 58, 237, 0.2);
+      color: #DDD6FE;
+      border: 1px solid rgba(124, 58, 237, 0.4);
+    }
+
+    .feature-icon-wait {
+      background: rgba(56, 189, 248, 0.2);
+      color: #BAE6FD;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .feature-content h4 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 2px;
+    }
+
+    .feature-content p {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.72);
+      margin-bottom: 0;
+      line-height: 1.4;
+    }
+
+    .hero-footer {
+      position: relative;
+      z-index: 2;
+      padding-top: 24px;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.55);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Right Login Form Panel */
+    .form-panel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-xl);
+      padding: 40px;
+    }
+
+    .form-header {
+      margin-bottom: 24px;
+    }
+
+    .form-header h2 {
+      font-size: 1.5rem;
+      color: var(--navy-dark);
+      margin-bottom: 6px;
+    }
+
+    .form-header p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0;
+    }
+
+    /* Role Selection Cards */
+    .role-section-label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--navy-dark);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .role-card {
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: #FFFFFF;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .role-card:hover {
+      border-color: var(--primary-teal);
+      background-color: var(--primary-teal-subtle);
+      transform: translateY(-1px);
+    }
+
+    .role-card.active {
+      border-color: var(--primary-teal);
+      background-color: rgba(15, 118, 110, 0.08);
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.18);
+    }
+
+    .role-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-xs);
+      background-color: var(--bg-page);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--navy-dark);
+      flex-shrink: 0;
+      transition: all var(--transition-fast);
+    }
+
+    .role-card.active .role-icon-box {
+      background-color: var(--primary-teal);
+      color: #FFFFFF;
+    }
+
+    .role-details {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .role-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--navy-dark);
+    }
+
+    .role-desc {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+
+    /* Track Without Login Link */
+    .track-guest-card {
+      margin-top: 20px;
+      padding: 12px 14px;
+      background-color: var(--primary-teal-subtle);
+      border: 1px dashed rgba(15, 118, 110, 0.4);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .track-guest-text {
+      font-size: 0.8125rem;
+      color: var(--navy-dark);
+      font-weight: 500;
+    }
+
+    .track-guest-btn {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--primary-teal);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .track-guest-btn:hover {
+      color: var(--primary-teal-hover);
+      text-decoration: underline;
+    }
+
+    /* General Form Error Alert */
+    .alert-general-error {
+      display: none;
+      background-color: var(--sev-5-bg);
+      border: 1px solid var(--sev-5-border);
+      color: var(--sev-5-emergency);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      margin-bottom: 16px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alert-general-error.active {
+      display: flex;
+    }
+
+    /* Loading Spinner */
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spinner-icon {
+      animation: spin 1s linear infinite;
+    }
+
+    /* ==========================================================================
+       Responsive Breakpoint for Mobile
+       ========================================================================== */
+    @media (max-width: 960px) {
+      .login-container {
+        flex-direction: column;
+      }
+      .hero-panel {
+        flex: none;
+        padding: 32px 24px;
+      }
+      .hero-tagline {
+        font-size: 1.4rem;
+      }
+      .features-list {
+        display: none; /* Keep hero clean on mobile screens */
+      }
+      .form-panel {
+        padding: 24px 16px;
+      }
+      .login-box {
+        padding: 24px 20px;
+        box-shadow: var(--shadow-md);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    
+    <!-- LEFT PANEL: Brand, Tagline & 3 Feature Highlights -->
+    <div class="hero-panel">
+      <div class="hero-header">
+        <a href="login.html" class="hero-brand" aria-label="SmartOPD Home">
+          <div class="hero-logo-box">
+            <!-- Medical Shield / Pulse Vector SVG -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v8M8 12h8"/>
+            </svg>
+          </div>
+          <span class="hero-brand-name">Smart<span>OPD</span></span>
+        </a>
+
+        <h1 class="hero-tagline">Right patient. Right time. Clearly explained.</h1>
+        <p class="hero-subtext">
+          Next-generation outpatient queueing system combining clinical emergency triage with starvation-preventing fairness algorithms.
+        </p>
+
+        <!-- 3 Feature Highlights -->
+        <div class="features-list">
+          <!-- 1. Emergency Priority -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper feature-icon-emergency">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h4>Emergency Priority (Sev 1–5)</h4>
+              <p>Dynamic clinical triage instantly escalates Level 5 critical emergencies ahead of routine consultations.</p>
+            </div>
+          </div>
+
+          <!-- 2. Fairness Boost -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper feature-icon-fairness">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+                <path d="M16 16l3 3"></path>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h4>Fairness Boost Algorithm</h4>
+              <p>Mathematical aging factors prevent starvation so routine patients never wait indefinitely in lobby.</p>
+            </div>
+          </div>
+
+          <!-- 3. Live Wait Estimates -->
+          <div class="feature-card">
+            <div class="feature-icon-wrapper feature-icon-wait">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h4>Live Wait Estimates & Explainability</h4>
+              <p>Transparent queue positions and plain-English reasons for every sequence adjustment.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-footer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>SmartOPD - Java OOP Project</span>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Authentication Form & Role Selector -->
+    <div class="form-panel">
+      <div class="login-box">
+        <div class="form-header">
+          <h2>Sign In to Portal</h2>
+          <p>Select your hospital role to access your dedicated workspace.</p>
+        </div>
+
+        <!-- Role Selector (2 Clickable Cards) -->
+        <div class="role-section-label">
+          <span>Choose Your Role</span>
+        </div>
+
+        <div class="role-grid" role="radiogroup" aria-label="Hospital Role Selector">
+          <!-- Front Desk Card -->
+          <div class="role-card active" data-role="Receptionist" tabindex="0" role="radio" aria-checked="true">
+            <div class="role-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </div>
+            <div class="role-details">
+              <span class="role-title">Front Desk</span>
+              <span class="role-desc">Triage & Tokens</span>
+            </div>
+          </div>
+
+          <!-- Doctor Card -->
+          <div class="role-card" data-role="Doctor" tabindex="0" role="radio" aria-checked="false">
+            <div class="role-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
+            </div>
+            <div class="role-details">
+              <span class="role-title">Doctor</span>
+              <span class="role-desc">OPD Room</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- General Error Alert -->
+        <div class="alert-general-error" id="form-general-error" role="alert">
+          <!-- Filled by auth.js -->
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" novalidate>
+          <!-- Username Field -->
+          <div class="form-group">
+            <label class="form-label" for="username">
+              Username <span class="required">*</span>
+            </label>
+            <div class="input-icon-wrapper">
+              <span class="input-icon-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                class="form-control has-left-icon" 
+                placeholder="Enter username" 
+                autocomplete="username"
+                required
+              >
+            </div>
+            <div class="form-error" id="username-error">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Please enter a valid username.</span>
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label class="form-label" for="password">
+              Password <span class="required">*</span>
+            </label>
+            <div class="input-icon-wrapper">
+              <span class="input-icon-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                class="form-control has-left-icon has-right-icon" 
+                placeholder="Enter password" 
+                autocomplete="current-password"
+                required
+              >
+              <button 
+                type="button" 
+                class="input-icon-right" 
+                id="toggle-password-btn" 
+                aria-label="Show password"
+                title="Toggle password visibility"
+              >
+                <!-- Eye Icon -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            <div class="form-error" id="password-error">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Please enter your password.</span>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary btn-block btn-lg mt-4" id="submit-btn">
+            <span id="submit-btn-text">Sign In as Front Desk</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </form>
+
+        <!-- Hints under the form -->
+        <div style="margin-top: 16px; text-align: center;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">
+            Staff accounts are created by the Front Desk. Patients do not need an account.
+          </div>
+        </div>
+
+        <!-- Direct Guest Patient Token Tracking Link -->
+        <div class="track-guest-card">
+          <span class="track-guest-text">Just want to track a token?</span>
+          <a href="patient-tracker.html?guest=true" class="track-guest-btn">
+            <span>Track without login</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14"></path>
+              <path d="M12 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Waiting Room TV Display Board Link -->
+        <div style="text-align: center; margin-top: 14px;">
+          <a href="display-board.html" target="_blank" style="font-size: 0.8125rem; color: var(--text-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: var(--radius-xs); transition: color var(--transition-fast);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span>Open Waiting Room Display Board</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Shared Helpers and Authentication Script -->
+  <script src="js/app.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

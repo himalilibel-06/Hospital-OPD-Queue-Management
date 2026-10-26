@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartOPD Queue Engine – Test Suite</title>
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <style>
+    body { padding: 40px; background-color: var(--bg-page); }
+    .test-box { max-width: 800px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; padding: 28px; box-shadow: var(--shadow-md); border: 1px solid var(--border-light); }
+    .test-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-light); font-size: 0.875rem; }
+    .test-pass { color: #16A34A; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+    .test-fail { color: #DC2626; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  </style>
+</head>
+<body>
+  <div class="test-box">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <div>
+        <h2 style="margin-bottom: 2px;">SmartOPD Queue Engine Automated Tests</h2>
+        <span class="text-xs text-muted">Client-side Verification of PriorityQueue & Fairness Rules</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="runAllBrowserTests()">Re-Run Tests</button>
+    </div>
+
+    <div id="test-results-list"></div>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center;">
+      <span class="text-xs text-muted">SmartOPD • Java OOP Simulation Test Harness</span>
+      <span id="test-summary-badge" class="badge badge-completed">Running...</span>
+    </div>
+  </div>
+
+  <script src="../mock-data.js"></script>
+  <script src="../scoring.js"></script>
+  <script src="../queue-mock.js"></script>
+  <script src="../simulator.js"></script>
+  <script>
+    function runAllBrowserTests() {
+      const list = document.getElementById('test-results-list');
+      const badge = document.getElementById('test-summary-badge');
+      list.innerHTML = '';
+      const q = window.SmartOPDQueue;
+
+      q.resetState();
+      q.resetClock();
+
+      let passed = 0;
+      let total = 0;
+
+      function logTest(name, condition, details = '') {
+        total++;
+        if (condition) passed++;
+        const row = document.createElement('div');
+        row.className = 'test-row';
+        row.innerHTML = `
+          <span><strong>Test ${total}:</strong> ${name}</span>
+          <span class="${condition ? 'test-pass' : 'test-fail'}">${condition ? 'PASS' : 'FAIL'}</span>
+        `;
+        list.appendChild(row);
+      }
+
+      // Test 1: Emergency Override Ordering
+      q.registerPatient({ name: 'Walkin Test', age: 30, gender: 'M', phone: '9876500001', category: 'Walk-in', severity: 2, doctorId: 'DOC-105' });
+      const emerg = q.registerPatient({ name: 'Emerg Test', age: 50, gender: 'F', phone: '9876500002', category: 'Emergency', severity: 5, doctorId: 'DOC-105' });
+      const q105 = q.getDoctorQueue('DOC-105');
+      logTest('Emergency Override Ordering (Severity 5 -> Position #1)', q105[0].id === emerg.id);
+
+      // Test 2: Fairness Boost after advanceClock(+50)
+      const sched = q.registerPatient({ name: 'Sched Test', age: 40, gender: 'M', phone: '9876500003', category: 'Scheduled', severity: 1, doctorId: 'DOC-101', appointmentTime: '11:00' });
+      q.advanceClock(50);
+      const isBoosted = q.isFairnessBoosted(sched, q.getNow());
+      logTest('Fairness Boost (+150 pts) after advanceClock(+50m)', isBoosted);
+
+      // Test 3: Emergency Cap Rule
+      q.resetState();
+      q.resetClock();
+      const s = q.getState();
+      const doc = s.doctors.find(d => d.id === 'DOC-103');
+      doc.consecutiveEmergencies = 2;
+      const starving = { id: 'P-STARVE', tokenNumber: 'PED-W-998', name: 'Starving', age: 8, gender: 'F', phone: '9876599998', category: 'Walk-in', severity: 1, department: 'Pediatrics', doctorId: 'DOC-103', doctorName: doc.name, room: doc.room, registrationTime: new Date(Date.now() - 46 * 60000).toISOString(), status: 'Waiting' };
+      const urg = { id: 'P-URG', tokenNumber: 'PED-E-999', name: 'Urgent Sev 4', age: 6, gender: 'M', phone: '9876599999', category: 'Emergency', severity: 4, department: 'Pediatrics', doctorId: 'DOC-103', doctorName: doc.name, room: doc.room, registrationTime: new Date().toISOString(), status: 'Waiting' };
+      s.patients.push(starving);
+      s.patients.push(urg);
+      q.saveState(s);
+      const called = q.callNext('DOC-103');
+      logTest('Emergency Cap Rule (Serves fairness-boosted patient when cap=2 reached)', called.id === starving.id);
+
+      // Test 4: No-show frees the slot
+      const preQ = q.getDoctorQueue('DOC-105');
+      const topT = preQ[0].tokenNumber;
+      const nextT = preQ[1].tokenNumber;
+      q.markNoShow(topT);
+      const postQ = q.getDoctorQueue('DOC-105');
+      logTest('No-Show frees slot & shifts remaining queue up', postQ[0].tokenNumber === nextT);
+
+      // Test 5: Tie-break by earlier registration time
+      q.resetState();
+      q.resetClock();
+      const st = q.getState();
+      st.patients = st.patients.filter(p => !(p.doctorId === 'DOC-104' && p.status === 'Waiting'));
+      const pA = { id: 'PA', tokenNumber: 'O-1', name: 'Earlier A', age: 30, gender: 'M', phone: '9876511111', category: 'Walk-in', severity: 2, department: 'Orthopedics', doctorId: 'DOC-104', doctorName: 'Dr. Vikram Patel', room: 'OPD Room 112', registrationTime: new Date(Date.now() - 10000).toISOString(), status: 'Waiting' };
+      const pB = { id: 'PB', tokenNumber: 'O-2', name: 'Later B', age: 32, gender: 'F', phone: '9876522222', category: 'Walk-in', severity: 2, department: 'Orthopedics', doctorId: 'DOC-104', doctorName: 'Dr. Vikram Patel', room: 'OPD Room 112', registrationTime: new Date(Date.now() - 5000).toISOString(), status: 'Waiting' };
+      st.patients.push(pB);
+      st.patients.push(pA);
+      q.saveState(st);
+      const tieQ = q.getDoctorQueue('DOC-104');
+      logTest('Tie-break deterministically by registration time (FIFO)', tieQ[0].id === pA.id);
+
+      // Test 6: getPatientByToken (case-insensitive & trim)
+      q.resetState();
+      q.resetClock();
+      const foundToken = q.getPatientByToken('   card-w-005   ');
+      logTest('getPatientByToken: Case-insensitive & whitespace trimming', foundToken !== null && foundToken.tokenNumber === 'CARD-W-005');
+
+      // Test 7: getPublicBoardData zero PII
+      const board = q.getPublicBoardData();
+      let hasPII = false;
+      board.forEach(d => {
+        if (d.patientName || d.phone || d.age || d.chiefComplaint) hasPII = true;
+        (d.nextTokens || []).forEach(t => {
+          if (t.name || t.patientName || t.phone || t.age || t.chiefComplaint) hasPII = true;
+        });
+      });
+      logTest('getPublicBoardData: Contains ZERO patient names, phone, age or complaints', !hasPII && board.length >= 5);
+
+      // Test 8: getPublicQueueSummary privacy safe
+      const summary = q.getPublicQueueSummary('CARD-W-005');
+      const isSafe = summary && summary.token === 'CARD-W-005' &&
+                     summary.firstName === 'Priya' &&
+                     summary.name === undefined &&
+                     summary.phone === undefined &&
+                     summary.age === undefined &&
+                     summary.chiefComplaint === undefined &&
+                     typeof summary.position === 'number';
+      logTest('getPublicQueueSummary: Exposes only privacy-safe fields & first name greeting', isSafe);
+
+      // Test 9: getTokenTimeline order
+      q.completeConsultation('DOC-103');
+      q.advanceClock(40);
+      const testP = q.callNext('DOC-103');
+      const timeline = q.getTokenTimeline(testP.tokenNumber);
+      let isOrdered = Array.isArray(timeline) && timeline.length >= 1;
+      for (let i = 0; i < timeline.length - 1; i++) {
+        if (new Date(timeline[i].timestamp).getTime() > new Date(timeline[i + 1].timestamp).getTime()) {
+          isOrdered = false;
+        }
+      }
+      logTest('getTokenTimeline: Events ordered chronologically (oldest first)', isOrdered);
+
+      // Test 10: Settings Validation
+      let caught = 0;
+      try { q.updateSettings({ SEVERITY_WEIGHT: -10 }); } catch (e) { caught++; }
+      try { q.updateSettings({ WAIT_WEIGHT_PER_MIN: 15 }); } catch (e) { caught++; }
+      try { q.updateSettings({ MAX_CONSECUTIVE_EMERGENCIES: 0 }); } catch (e) { caught++; }
+      try { q.updateSettings({ EMERGENCY_BUFFER_SLOTS_DEFAULT: 25 }); } catch (e) { caught++; }
+      logTest('Settings Validation: Rejects out-of-range values with readable errors (4/4)', caught === 4);
+
+      // Test 11: updateSettings Changes Scoring Order
+      q.resetState();
+      q.resetClock();
+      const s11 = q.getState();
+      s11.patients = s11.patients.filter(p => !(p.doctorId === 'DOC-104' && p.status === 'Waiting'));
+      q.saveState(s11);
+      const pHighSev = q.registerPatient({ name: 'Med Sev', age: 45, gender: 'F', phone: '9876540001', category: 'Walk-in', severity: 2, doctorId: 'DOC-104' });
+      const s11B = q.getState();
+      const pLongWait = { id: 'P_LW', tokenNumber: 'ORTH-W-888', name: 'Low Sev Long Wait', age: 50, gender: 'M', phone: '9876540002', category: 'Walk-in', severity: 1, department: 'Orthopedics', doctorId: 'DOC-104', doctorName: 'Dr. Vikram Patel', room: 'OPD Room 112', registrationTime: new Date(Date.now() - 80 * 60000).toISOString(), status: 'Waiting' };
+      s11B.patients.push(pLongWait);
+      q.saveState(s11B);
+      let qOrder = q.getDoctorQueue('DOC-104');
+      const pLongWaitFirst = qOrder[0].id === pLongWait.id;
+      q.updateSettings({ SEVERITY_WEIGHT: 300, WAIT_WEIGHT_PER_MIN: 0.2, FAIRNESS_BOOST: 10 });
+      qOrder = q.getDoctorQueue('DOC-104');
+      const pHighSevFirst = qOrder[0].id === pHighSev.id;
+      logTest('updateSettings: Dynamically inverts queue ordering based on weights', pLongWaitFirst && pHighSevFirst);
+      q.resetSettings();
+
+      // Test 12: deleteDoctor Blocked with Waiting Patients
+      q.resetState();
+      let delBlocked = false;
+      try { q.deleteDoctor('DOC-101'); } catch (e) { delBlocked = e.message.includes('waiting patient'); }
+      q.addDoctor({ id: 'DOC-TMP', name: 'Dr. Temp', department: 'General Medicine', room: 'Room 999', workingHours: { start: '09:00', end: '17:00' }, avgConsultMinutes: 10, emergencyBufferSlots: 2, status: 'Available' });
+      q.deleteDoctor('DOC-TMP');
+      const tmpExists = q.getDoctors().some(d => d.id === 'DOC-TMP');
+      logTest('deleteDoctor: Blocked when waiting patients exist & succeeds when 0 waiting', delBlocked && !tmpExists);
+
+      // Test 13: CONFIG_CHANGE Event Type
+      q.resetState();
+      q.updateSettings({ SEVERITY_WEIGHT: 120 });
+      const evts = q.getEvents({ limit: 5 });
+      const hasConfigEvt = evts.some(e => e.type === 'CONFIG_CHANGE');
+      const hasAdminEvt = evts.some(e => e.type === 'ADMIN_CHANGE');
+      logTest('queue-mock.js: Emits CONFIG_CHANGE event (zero ADMIN_CHANGE)', hasConfigEvt && !hasAdminEvt);
+
+      // --- Tests 14 to 19: Simulation Engine Tests ---
+      const Sim = window.SmartOPDSimulator;
+
+      // Test 14: Simulator deterministic for same seed
+      const simA = Sim.runSimulation({ ...Sim.PRESETS['busy-day'], randomSeed: 12345 });
+      const simB = Sim.runSimulation({ ...Sim.PRESETS['busy-day'], randomSeed: 12345 });
+      const isDeterm = JSON.stringify(simA.policies.smartopd.records) === JSON.stringify(simB.policies.smartopd.records) &&
+                       simA.policies.smartopd.metrics.averageWaitOverall === simB.policies.smartopd.metrics.averageWaitOverall;
+      logTest('Simulator is deterministic for the same seed', isDeterm);
+
+      // Test 15: All three policies serve every patient exactly once
+      const sim75 = Sim.runSimulation({ numPatients: 75, numDoctors: 3, randomSeed: 888 });
+      const fcfsS = sim75.policies.fcfs.records;
+      const strictS = sim75.policies.strictPriority.records;
+      const smartS = sim75.policies.smartopd.records;
+      const allOnce = fcfsS.length === 75 && new Set(fcfsS.map(p => p.id)).size === 75 &&
+                      strictS.length === 75 && new Set(strictS.map(p => p.id)).size === 75 &&
+                      smartS.length === 75 && new Set(smartS.map(p => p.id)).size === 75;
+      logTest('All three simulation policies serve every patient exactly once', allOnce);
+
+      // Test 16: In Busy Day, SmartOPD average emergency wait <= FCFS
+      const bRes = Sim.runSimulation(Sim.PRESETS['busy-day']);
+      logTest('In Busy Day, SmartOPD average emergency wait <= FCFS', bRes.policies.smartopd.metrics.averageWaitEmergency <= bRes.policies.fcfs.metrics.averageWaitEmergency);
+
+      // Test 17: In Emergency Surge, SmartOPD starvation count <= Strict Priority
+      const sRes = Sim.runSimulation(Sim.PRESETS['emergency-surge']);
+      logTest('In Emergency Surge, SmartOPD starvation count <= Strict Priority', sRes.policies.smartopd.metrics.starvationCount <= sRes.policies.strictPriority.metrics.starvationCount);
+
+      // Test 18: Insights text contains numbers that match the metrics
+      const bInsights = bRes.insights;
+      const bFcfs = bRes.policies.fcfs.metrics;
+      const bStrict = bRes.policies.strictPriority.metrics;
+      const bSmart = bRes.policies.smartopd.metrics;
+      const matchInsights = bInsights.some(t => t.includes(String(bSmart.avgWaitEmergency)) && t.includes(String(bFcfs.avgWaitEmergency))) &&
+                            bInsights.some(t => t.includes(String(bStrict.starvationCount)) && t.includes(String(bSmart.starvationCount))) &&
+                            bInsights.some(t => t.includes(String(bSmart.maxScheduledWait))) &&
+                            bInsights.some(t => t.includes(String(bSmart.p90Wait)));
+      logTest('Insights text contains numbers that match the simulation metrics', matchInsights);
+
+      // Test 19: 500 patient run finishes under 2 seconds
+      const t0 = performance.now();
+      const sim500 = Sim.runSimulation({ numPatients: 500, numDoctors: 4, avgConsultMinutes: 10, randomSeed: 42 });
+      const elapsed500 = performance.now() - t0;
+      logTest(`500-patient simulation finishes under 2 seconds (${elapsed500.toFixed(1)}ms)`, elapsed500 < 2000 && sim500.patientsCount === 500);
+
+      // --- Task 6 Verification Checks ---
+      const knownConfig = { numPatients: 100, numDoctors: 4, avgConsultMinutes: 12, arrivalSpreadMinutes: 300, randomSeed: 42 };
+      const knownRun = Sim.runSimulation(knownConfig);
+      logTest('offeredLoadPercent is correct for a known config (100%)', knownRun.offeredLoadPercent === 100);
+
+      const busyPresetRun = Sim.runSimulation(Sim.PRESETS['busy-day']);
+      logTest('Busy Day preset load is between 80 and 100 (90%)', busyPresetRun.offeredLoadPercent >= 80 && busyPresetRun.offeredLoadPercent <= 100);
+
+      let sumSmStarv = 0, sumStStarv = 0, sumSmMax = 0, sumStMax = 0;
+      for (let s = 1; s <= 30; s++) {
+        const run = Sim.runSimulation({ ...Sim.PRESETS['busy-day'], randomSeed: s });
+        sumSmStarv += run.policies.smartopd.metrics.starvationCount;
+        sumStStarv += run.policies.strictPriority.metrics.starvationCount;
+        sumSmMax += run.policies.smartopd.metrics.maxScheduledWait;
+        sumStMax += run.policies.strictPriority.metrics.maxScheduledWait;
+      }
+      logTest('Averaged over seeds 1 to 30, SmartOPD scheduled starvation <= Strict Priority', (sumSmStarv / 30) <= (sumStStarv / 30));
+      logTest('Averaged over seeds 1 to 30, SmartOPD max scheduled wait <= Strict Priority', (sumSmMax / 30) <= (sumStMax / 30));
+
+      const testPat = { id: 'T-01', category: 'Scheduled', severity: 3, registrationTime: new Date(Date.now() - 25 * 60000).toISOString(), appointmentTime: '12:00', arrivalMinute: 5, appointmentMinute: 30 };
+      const nowT = new Date();
+      const sQM = q.calculatePriorityScore(testPat, nowT);
+      const sScoring = window.SmartOPDScoring.calculatePriorityScore(testPat, { now: nowT, settings: q.getSettings() });
+      logTest('Shared scoring function equality test (SmartOPDScoring == queue-mock)', sQM === sScoring);
+
+      badge.textContent = `${passed} / ${total} Passed (${Math.round((passed / total) * 100)}%)`;
+      badge.className = passed === total ? 'badge badge-completed' : 'badge badge-emergency';
+    }
+
+    window.onload = runAllBrowserTests;
+  </script>
+</body>
+</html>
